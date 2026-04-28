@@ -1,8 +1,17 @@
-# rename-invoice · 发票 PDF 自动加价格前缀工具
+<p align="center">
+  <img src="./assets/icon-256.png" alt="rename-invoice" width="128" height="128">
+</p>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
-[![Platform: Windows](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey.svg)]()
+<h1 align="center">rename-invoice</h1>
+
+<p align="center">发票 PDF 自动加价格前缀工具</p>
+
+<p align="center">
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+  <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python 3.8+">
+  <img src="https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey.svg" alt="Platform: Windows">
+  <a href="./CHANGELOG.md"><img src="https://img.shields.io/badge/version-0.1.0-green.svg" alt="Version 0.1.0"></a>
+</p>
 
 把中国大陆增值税电子发票 PDF 重命名成 `{价税合计}元-{原文件名}.pdf`，方便报销时一眼看到金额。
 
@@ -255,14 +264,29 @@ C:\Users\liuyu\tools\rename_invoice\rename_invoice.log
 ## 文件清单
 
 ```
-C:\Users\liuyu\tools\rename_invoice\
+rename_invoice/
 ├─ rename_invoice.py          # 核心脚本
 ├─ rename_invoice.bat         # 拖放/双击入口
-├─ rename_invoice.log         # 审计日志（自动生成）
+├─ rename_invoice.log         # 审计日志（运行后自动生成, .gitignore 已排除）
 ├─ install_context.bat/.ps1   # 注册右键菜单
 ├─ uninstall_context.bat/.ps1 # 卸载右键菜单
 ├─ test_parser.py             # 中文大写金额解析单元测试
-└─ README.md                  # 本文档
+├─ requirements.txt           # Python 依赖
+├─ assets/
+│  ├─ icon.ico                # 多尺寸图标（16/24/32/48/64/128/256）
+│  ├─ icon-256.png            # PNG 版本（README/网络展示用）
+│  └─ generate_icon.py        # 图标生成脚本（可重现）
+├─ .github/
+│  ├─ workflows/test.yml      # CI: Windows + Python 3.8/3.11/3.12 + BOM 检查
+│  ├─ ISSUE_TEMPLATE/         # bug 报告 / 功能建议模板
+│  └─ PULL_REQUEST_TEMPLATE.md
+├─ README.md                  # 本文档
+├─ CHANGELOG.md               # 更新日志
+├─ CONTRIBUTING.md             # 贡献指南
+├─ SECURITY.md                # 安全策略
+├─ LICENSE                    # MIT
+├─ .gitignore
+└─ .gitattributes             # 锁定行尾（.bat=CRLF, .ps1=CRLF, .py=LF）
 ```
 
 ---

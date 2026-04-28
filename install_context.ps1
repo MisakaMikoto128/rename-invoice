@@ -7,10 +7,15 @@ $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 $BatPath = Join-Path $PSScriptRoot 'rename_invoice.bat'
+$IconPath = Join-Path $PSScriptRoot 'assets\icon.ico'
 if (-not (Test-Path $BatPath)) {
     Write-Host "[ERROR] 找不到 rename_invoice.bat: $BatPath" -ForegroundColor Red
     pause
     exit 1
+}
+# 图标可选: 有就用, 没有就回退到 .bat 自身
+if (-not (Test-Path $IconPath)) {
+    $IconPath = $BatPath
 }
 
 $MenuText = '添加发票价格前缀'
@@ -34,7 +39,7 @@ foreach ($t in $Targets) {
     if (-not (Test-Path $commandKey)) { New-Item -Path $commandKey -Force | Out-Null }
 
     Set-ItemProperty -Path $shellKey   -Name '(Default)' -Value $MenuText
-    Set-ItemProperty -Path $shellKey   -Name 'Icon'      -Value $BatPath
+    Set-ItemProperty -Path $shellKey   -Name 'Icon'      -Value $IconPath
     Set-ItemProperty -Path $commandKey -Name '(Default)' -Value $t.Cmd
 
     Write-Host "[OK] $($t.Desc): $shellKey" -ForegroundColor Green
