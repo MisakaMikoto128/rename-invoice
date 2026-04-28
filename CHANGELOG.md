@@ -22,6 +22,11 @@
 - 幂等：已加价格前缀的文件（匹配 `^\d+(\.\d{1,2})?元-`）自动跳过
 - 重名安全：目标文件已存在时追加 `(2)`、`(3)`，绝不覆盖
 - 审计日志：所有重命名/失败追加到 `rename_invoice.log`
+- 项目图标（深蓝圆角 + 白色 ¥），多尺寸 `.ico`（16/24/32/48/64/128/256），右键菜单自动应用
+- 可重现的图标生成脚本 `assets/generate_icon.py`
+- 开源项目标配：`LICENSE`(MIT) / `CHANGELOG.md` / `CONTRIBUTING.md` / `SECURITY.md`
+- GitHub Issue / PR 模板（`.github/ISSUE_TEMPLATE/*` + `PULL_REQUEST_TEMPLATE.md`）
+- GitHub Actions CI：Windows + Python 3.8/3.11/3.12 跑单元测试 + 强制 `.ps1` 文件 UTF-8 BOM 检查
 
 ### Fixed
 

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 使用问题 / Usage Question
+    url: https://github.com/MisakaMikoto128/rename-invoice/discussions
+    about: 不确定是不是 bug、想问怎么用？请去 Discussions
+  - name: 安全漏洞 / Security Issue
+    url: https://github.com/MisakaMikoto128/rename-invoice/security/advisories/new
+    about: 涉及安全问题不要开 public issue, 请用 Private Vulnerability Reporting
