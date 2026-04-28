@@ -1,0 +1,14 @@
+* text=auto eol=lf
+
+# Windows 批处理: 必须 CRLF, 否则 cmd 解析失败
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# PowerShell: CRLF (Windows 习惯)
+*.ps1 text eol=crlf
+
+# 二进制
+*.pdf binary
+*.png binary
+*.jpg binary
+*.ico binary
