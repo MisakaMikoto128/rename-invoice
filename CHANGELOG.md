@@ -4,6 +4,22 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-05-08
+
+### Added
+
+- 右键菜单改为默认静默 (pythonw.exe) — 完全无 cmd 窗口闪烁
+- 文件锁 + 队列架构：多选 N 个 PDF 触发 N 次右键 → 1 个 leader 进程统一处理 → 1 条日志批次（解决"开 N 条线程"的浪费）
+- `--silent` 命令行标志：静默 + 队列模式
+- `--summary` 命令行标志：处理完后弹 Tk 汇总窗口（列出成功/跳过/失败明细）
+- `install_context.ps1` 安装时交互选择：[1] 静默（默认） / [2] 静默 + 汇总窗口
+- `install_context.ps1` 加 `-Summary` / `-NoSummary` 命令行 switch（脚本化使用）
+
+### Changed
+
+- 右键菜单注册的命令从 `rename_invoice.bat` 改为直接调 `pythonw.exe rename_invoice.py --silent`
+- 双击 `.bat` / 拖放到 `.bat` 这两个路径不变，仍然在 cmd 窗口显示彩色输出
+
 ## [0.1.0] - 2026-04-28
 
 ### Added

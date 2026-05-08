@@ -10,7 +10,7 @@
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python 3.8+">
   <img src="https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey.svg" alt="Platform: Windows">
-  <a href="./CHANGELOG.md"><img src="https://img.shields.io/badge/version-0.1.0-green.svg" alt="Version 0.1.0"></a>
+  <a href="./CHANGELOG.md"><img src="https://img.shields.io/badge/version-0.2.0-green.svg" alt="Version 0.2.0"></a>
 </p>
 
 把中国大陆增值税电子发票 PDF 重命名成 `{价税合计}元-{原文件名}.pdf`，方便报销时一眼看到金额。
@@ -118,12 +118,17 @@ C:\Users\liuyu\tools\rename_invoice\
 只需要做**一次**：
 
 1. 双击 `C:\Users\liuyu\tools\rename_invoice\install_context.bat`
-2. 看到三行 `[OK]` 即成功
-3. 按回车关闭
+2. 选安装模式：
+   - 回车（或输入 `1`）→ **静默模式**（默认）：右键时**完全无窗口**，结果写日志
+   - 输入 `2` → **静默 + 汇总窗口**：处理完后弹一个小窗口列出全部成功/跳过/失败
+3. 看到三行 `[OK]` 即成功
+4. 按回车关闭
 
-之后无论在哪个文件夹/PDF 上右键，都会出现 **"添加发票价格前缀"**。
+之后无论在哪个文件夹/PDF 上右键，都会出现 **"添加发票价格前缀"**。想换模式就再双击一次 `install_context.bat`，选另一项。
 
 > ⚠️ Windows 11 用户可能要点 **"显示更多选项"**（或按 `Shift + F10`）才能看到这个菜单。
+
+> 💡 多选 N 个 PDF 右键时，Windows 会触发 N 次菜单调用，但工具用文件锁合并成一次处理：你只会看到一条日志批次（启用汇总窗口时也只弹一个窗口）。
 
 ---
 
@@ -145,9 +150,11 @@ C:\Users\liuyu\tools\rename_invoice\
 
 | 在哪儿右键 | 做什么 |
 |-----------|--------|
-| 任意 PDF 文件 | 处理这一个 PDF |
+| 任意 PDF 文件（可多选） | 处理选中的 PDF |
 | 任意文件夹（图标上） | 处理该文件夹下所有 PDF |
 | 任意文件夹空白处（资源管理器内） | 处理当前打开的文件夹下所有 PDF |
+
+右键路径**默认静默**：不弹任何窗口，结果只写到 `rename_invoice.log`。如果想看处理结果，安装时选 `[2]` 启用汇总窗口（处理完弹一个 Tk 窗口列出全部成功/跳过/失败）。
 
 ### 方式 C：双击当前目录
 
@@ -164,6 +171,12 @@ C:\Users\liuyu\tools\rename_invoice\
 python C:\Users\liuyu\tools\rename_invoice\rename_invoice.py "D:\path\to\folder"
 python C:\Users\liuyu\tools\rename_invoice\rename_invoice.py "D:\path\to\file.pdf"
 python C:\Users\liuyu\tools\rename_invoice\rename_invoice.py "D:\folder1" "D:\folder2"
+
+# 静默 + 队列模式 (右键菜单走的就是这个; 一般不用直接调用)
+pythonw C:\Users\liuyu\tools\rename_invoice\rename_invoice.py --silent "D:\path"
+
+# 静默 + 处理完弹 Tk 汇总窗口
+pythonw C:\Users\liuyu\tools\rename_invoice\rename_invoice.py --silent --summary "D:\path"
 ```
 
 无参数时扫描当前工作目录。
@@ -384,7 +397,16 @@ pip install --upgrade pymupdf
 
 ### Q：为什么不做 GUI？
 
-YAGNI。三种命令式入口已经覆盖所有场景，多个窗口反而拖累速度。
+YAGNI。三种命令式入口已经覆盖所有场景。如果想看处理结果，安装时选 `[2]` 静默+汇总窗口模式即可（Tk 自带，无新依赖）。
+
+### Q：右键之后什么都没发生，是不是工具坏了？
+
+默认装的是**静默模式**，处理无窗口、无声音。验证方式：
+
+1. 看文件名是否多了 `XX元-` 前缀
+2. 打开 `C:\Users\liuyu\tools\rename_invoice\rename_invoice.log` 看最近的记录
+
+如果都没有变化，重新双击 `install_context.bat` 选 `[2]`，下次右键就会弹汇总窗口告诉你结果。
 
 ### Q：提取的精度是多少？
 
