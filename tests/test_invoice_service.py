@@ -84,3 +84,47 @@ def test_delete_project_cascades_invoices(conn, project):
     ivs.create_invoice(conn, project_id=project.id, file_name="b.pdf")
     ps.delete_project(conn, project.id)
     assert ivs.list_invoices(conn, project.id) == []
+
+
+def test_search_by_invoice_no(conn, project):
+    ivs.create_invoice(conn, project_id=project.id, file_name="a.pdf",
+                       invoice_no="25957000000146502141")
+    ivs.create_invoice(conn, project_id=project.id, file_name="b.pdf",
+                       invoice_no="25322000000545152811")
+    found = ivs.search_invoices(conn, "25957")
+    assert len(found) == 1
+    assert found[0].invoice_no.startswith("25957")
+
+
+def test_search_by_seller(conn, project):
+    ivs.create_invoice(conn, project_id=project.id, file_name="a.pdf",
+                       seller="深圳市立创")
+    ivs.create_invoice(conn, project_id=project.id, file_name="b.pdf",
+                       seller="苏州卡方")
+    found = ivs.search_invoices(conn, "立创")
+    assert len(found) == 1
+
+
+def test_search_by_remark(conn, project):
+    ivs.create_invoice(conn, project_id=project.id, file_name="a.pdf",
+                       remark="差旅项目-A")
+    found = ivs.search_invoices(conn, "差旅")
+    assert len(found) == 1
+
+
+def test_search_scoped_to_project(conn):
+    p1 = ps.create_project(conn, name="P1", folder_path="C:/sa")
+    p2 = ps.create_project(conn, name="P2", folder_path="C:/sb")
+    ivs.create_invoice(conn, project_id=p1.id, file_name="x.pdf",
+                       seller="苏州")
+    ivs.create_invoice(conn, project_id=p2.id, file_name="y.pdf",
+                       seller="苏州")
+    found = ivs.search_invoices(conn, "苏州", project_id=p1.id)
+    assert len(found) == 1
+    assert found[0].project_id == p1.id
+
+
+def test_search_no_match(conn, project):
+    ivs.create_invoice(conn, project_id=project.id, file_name="a.pdf",
+                       seller="X")
+    assert ivs.search_invoices(conn, "不存在") == []
