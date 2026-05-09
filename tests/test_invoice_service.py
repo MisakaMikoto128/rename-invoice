@@ -1,0 +1,49 @@
+import pytest
+from accounting.services import project_service as ps
+from accounting.services import invoice_service as ivs
+
+
+@pytest.fixture
+def project(conn):
+    return ps.create_project(conn, name="P", folder_path="C:/proj")
+
+
+def test_create_invoice(conn, project):
+    inv = ivs.create_invoice(
+        conn, project_id=project.id, file_name="a.pdf",
+        invoice_no="2595", invoice_date="2025年11月18日",
+        invoice_date_iso="2025-11-18", seller="S", amount=16.60,
+    )
+    assert inv.id is not None
+    assert inv.amount == 16.60
+    assert inv.status == "未报销"
+
+
+def test_create_invoice_duplicate_file_raises(conn, project):
+    ivs.create_invoice(conn, project_id=project.id, file_name="a.pdf")
+    with pytest.raises(Exception):
+        ivs.create_invoice(conn, project_id=project.id, file_name="a.pdf")
+
+
+def test_create_invoice_same_filename_diff_project(conn):
+    p1 = ps.create_project(conn, name="P1", folder_path="C:/1")
+    p2 = ps.create_project(conn, name="P2", folder_path="C:/2")
+    ivs.create_invoice(conn, project_id=p1.id, file_name="a.pdf")
+    ivs.create_invoice(conn, project_id=p2.id, file_name="a.pdf")  # ok, scoped
+
+
+def test_list_invoices_in_project(conn, project):
+    ivs.create_invoice(conn, project_id=project.id, file_name="a.pdf")
+    ivs.create_invoice(conn, project_id=project.id, file_name="b.pdf")
+    items = ivs.list_invoices(conn, project.id)
+    assert len(items) == 2
+
+
+def test_get_invoice(conn, project):
+    inv = ivs.create_invoice(conn, project_id=project.id, file_name="x.pdf")
+    got = ivs.get_invoice(conn, inv.id)
+    assert got.file_name == "x.pdf"
+
+
+def test_get_invoice_missing(conn):
+    assert ivs.get_invoice(conn, 9999) is None
