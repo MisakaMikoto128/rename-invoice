@@ -2,7 +2,14 @@
 import sqlite3
 from typing import List, Optional
 
-from accounting.models import Invoice
+from accounting.models import Invoice, VALID_STATUS
+
+
+# 仅允许编辑这几列, 防 SQL 注入 (column 名从 UI 来)
+EDITABLE_COLUMNS = (
+    "invoice_no", "invoice_date", "invoice_date_iso",
+    "seller", "amount", "remark", "taobao_order",
+)
 
 
 def create_invoice(conn: sqlite3.Connection, project_id: int, file_name: str,
@@ -44,3 +51,32 @@ def list_invoices(conn: sqlite3.Connection, project_id: int) -> List[Invoice]:
         (project_id,),
     ).fetchall()
     return [Invoice.from_row(r) for r in rows]
+
+
+def update_invoice_field(conn: sqlite3.Connection, invoice_id: int,
+                         column: str, value) -> None:
+    if column not in EDITABLE_COLUMNS:
+        raise ValueError(f"Column not editable: {column!r}")
+    conn.execute(
+        f"UPDATE invoice SET {column} = ?, updated_at = CURRENT_TIMESTAMP "
+        f"WHERE id = ?",
+        (value, invoice_id),
+    )
+    conn.commit()
+
+
+def update_invoice_status(conn: sqlite3.Connection, invoice_id: int,
+                          status: str) -> None:
+    if status not in VALID_STATUS:
+        raise ValueError(f"Invalid status: {status!r}")
+    conn.execute(
+        "UPDATE invoice SET status = ?, updated_at = CURRENT_TIMESTAMP "
+        "WHERE id = ?",
+        (status, invoice_id),
+    )
+    conn.commit()
+
+
+def delete_invoice(conn: sqlite3.Connection, invoice_id: int) -> None:
+    conn.execute("DELETE FROM invoice WHERE id = ?", (invoice_id,))
+    conn.commit()
