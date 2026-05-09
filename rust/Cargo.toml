@@ -1,0 +1,29 @@
+[package]
+name = "rename-invoice"
+version = "0.5.0"
+edition = "2021"
+description = "发票 PDF 自动加价格前缀工具 (Rust 实现, 单 .exe + pdfium.dll)"
+license = "MIT"
+
+[[bin]]
+name = "rename-invoice"
+path = "src/main.rs"
+
+[dependencies]
+pdfium-render = "0.8"
+rust_xlsxwriter = { version = "0.79", features = ["chrono"] }
+chrono = "0.4"
+regex = "1"
+fs2 = "0.4"
+anyhow = "1"
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.55"
+windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_System_Console", "Win32_UI_WindowsAndMessaging"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+strip = true
+panic = "abort"
