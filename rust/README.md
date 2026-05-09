@@ -32,15 +32,20 @@ rename-invoice.exe uninstall
 解压后的 `rename-invoice-windows-x64/` 目录：
 
 ```
-rename-invoice.exe        主程序 (图标已嵌入)
+rename-invoice.exe        主程序 (console 子系统): install / uninstall / 直接模式
+rename-invoice-w.exe      静默版 (windows 子系统): 右键菜单专用, 0 cmd 闪窗
 pdfium.dll                Google PDFium PDF 解析库 (Apache-2.0)
 PDFIUM_LICENSE            PDFium 许可证 (再分发要求)
 README.md                 本说明
 ```
 
-**`pdfium.dll` 必须和 `rename-invoice.exe` 在同一目录**，否则程序会报"找不到 pdfium.dll"。
+**两个 `.exe` 加上 `pdfium.dll` 必须在同一目录**。`install` 子命令会自动把右键菜单注册到 `rename-invoice-w.exe`（这样右键时不会闪 cmd 窗口）。
 
-`.exe` 自带程序图标和右键菜单图标（Windows ICON RESOURCE），不需要额外文件。
+为什么要两个 .exe？跟 Python 的 `python.exe` / `pythonw.exe` 一样：
+- console 子系统的 .exe 适合从 PowerShell / cmd 跑（同步等退、stdin 正常）
+- windows 子系统的 .exe 启动时不创建任何 cmd 窗口（右键菜单的痛点）
+
+两个 .exe 嵌入了相同的图标，所以 Explorer 里两者都有图标。
 
 ## 给开发者
 

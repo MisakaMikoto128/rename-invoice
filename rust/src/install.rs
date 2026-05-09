@@ -31,10 +31,25 @@ pub fn install(_summary: bool, _xlsx: bool) -> Result<()> {
     let exe = current_exe()?;
     let exe_str = exe.to_string_lossy().to_string();
 
-    // 图标: 直接用 .exe 自身嵌入的 ICON RESOURCE (winresource build), 索引 0
-    let icon_path = format!("{},0", exe_str);
+    // 注册表右键 verb 用 rename-invoice-w.exe (windows 子系统, 0 cmd 闪窗)
+    let exe_dir = exe
+        .parent()
+        .ok_or_else(|| anyhow!("无法定位 .exe 父目录"))?;
+    let silent_exe = exe_dir.join("rename-invoice-w.exe");
+    if !silent_exe.exists() {
+        return Err(anyhow!(
+            "找不到 rename-invoice-w.exe (静默执行用): {}\n\
+             请确保 release zip 解压完整, 它应该和 rename-invoice.exe 在同一目录.",
+            silent_exe.display()
+        ));
+    }
+    let silent_exe_str = silent_exe.to_string_lossy().to_string();
 
-    println!("[INFO] 当前 .exe: {}", exe_str);
+    // 图标: 用 .exe 自身嵌入的 ICON RESOURCE, 索引 0 (两个 bin 都嵌了一样的图标)
+    let icon_path = format!("{},0", silent_exe_str);
+
+    println!("[INFO] 当前 .exe:    {}", exe_str);
+    println!("[INFO] 静默版 .exe: {}", silent_exe_str);
     println!();
 
     // 两问交互 (与 Python v0.4.0 行为一致). 命令行已传 _summary/_xlsx 时跳过.
@@ -77,8 +92,8 @@ pub fn install(_summary: bool, _xlsx: bool) -> Result<()> {
     };
     println!("[INFO] 安装模式: {}", mode_desc);
 
-    let cmd_file = format!("\"{}\" {} \"%1\"", exe_str, extra);
-    let cmd_bg = format!("\"{}\" {} \"%V\"", exe_str, extra);
+    let cmd_file = format!("\"{}\" {} \"%1\"", silent_exe_str, extra);
+    let cmd_bg = format!("\"{}\" {} \"%V\"", silent_exe_str, extra);
 
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
     let targets = [
