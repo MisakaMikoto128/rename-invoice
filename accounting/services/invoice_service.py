@@ -80,3 +80,21 @@ def update_invoice_status(conn: sqlite3.Connection, invoice_id: int,
 def delete_invoice(conn: sqlite3.Connection, invoice_id: int) -> None:
     conn.execute("DELETE FROM invoice WHERE id = ?", (invoice_id,))
     conn.commit()
+
+
+def search_invoices(conn: sqlite3.Connection, query: str,
+                    project_id: Optional[int] = None) -> List[Invoice]:
+    """模糊匹配 invoice_no / seller / remark / taobao_order / file_name."""
+    pattern = f"%{query}%"
+    sql = """
+        SELECT * FROM invoice
+        WHERE (invoice_no LIKE ? OR seller LIKE ? OR remark LIKE ?
+               OR taobao_order LIKE ? OR file_name LIKE ?)
+    """
+    args: list = [pattern] * 5
+    if project_id is not None:
+        sql += " AND project_id = ?"
+        args.append(project_id)
+    sql += " ORDER BY invoice_date_iso DESC, id DESC"
+    rows = conn.execute(sql, tuple(args)).fetchall()
+    return [Invoice.from_row(r) for r in rows]
