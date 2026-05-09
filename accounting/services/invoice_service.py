@@ -98,3 +98,34 @@ def search_invoices(conn: sqlite3.Connection, query: str,
     sql += " ORDER BY invoice_date_iso DESC, id DESC"
     rows = conn.execute(sql, tuple(args)).fetchall()
     return [Invoice.from_row(r) for r in rows]
+
+
+def stats_by_invoice_status(conn: sqlite3.Connection,
+                            project_id: Optional[int] = None) -> dict:
+    """{status: {count, sum}}; 三个 status 都有 (无数据时 0)."""
+    out = {s: {"count": 0, "sum": 0.0} for s in VALID_STATUS}
+    sql = "SELECT status, COUNT(*) c, COALESCE(SUM(amount), 0) s FROM invoice"
+    args: tuple = ()
+    if project_id is not None:
+        sql += " WHERE project_id = ?"
+        args = (project_id,)
+    sql += " GROUP BY status"
+    for row in conn.execute(sql, args):
+        out[row["status"]] = {"count": row["c"], "sum": float(row["s"])}
+    return out
+
+
+def stats_by_project_status(conn: sqlite3.Connection) -> dict:
+    """{project.status: {count: 项目数, sum: 项目下发票总金额}}."""
+    out = {s: {"count": 0, "sum": 0.0} for s in VALID_STATUS}
+    sql = """
+        SELECT p.status,
+               COUNT(DISTINCT p.id) c,
+               COALESCE(SUM(i.amount), 0) s
+        FROM project p
+        LEFT JOIN invoice i ON i.project_id = p.id
+        GROUP BY p.status
+    """
+    for row in conn.execute(sql):
+        out[row["status"]] = {"count": row["c"], "sum": float(row["s"])}
+    return out
