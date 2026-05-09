@@ -6,6 +6,7 @@
 
 use crate::log_audit::{log_line, log_path};
 use crate::process::{collect_pdfs, process_pdf, resolve_xlsx_dir, ProcessResult, Status};
+use crate::summary;
 use crate::xlsx;
 
 use anyhow::Result;
@@ -92,7 +93,7 @@ fn drain_queue() -> Vec<String> {
     lines
 }
 
-pub fn silent_main(paths: &[PathBuf], _show_summary: bool, want_xlsx: bool) -> Result<()> {
+pub fn silent_main(paths: &[PathBuf], show_summary: bool, want_xlsx: bool) -> Result<()> {
     let mut args: Vec<PathBuf> = paths.to_vec();
     if args.is_empty() {
         args.push(std::env::current_dir()?);
@@ -158,6 +159,7 @@ pub fn silent_main(paths: &[PathBuf], _show_summary: bool, want_xlsx: bool) -> R
         }
     }
 
+    let mut xlsx_written: Option<PathBuf> = None;
     if want_xlsx {
         let xlsx_results: Vec<ProcessResult> = all_results
             .iter()
@@ -169,16 +171,24 @@ pub fn silent_main(paths: &[PathBuf], _show_summary: bool, want_xlsx: bool) -> R
             let target_dir = resolve_xlsx_dir(&all_args_for_xlsx, &xlsx_results);
             let xlsx_path = xlsx::output_path(&target_dir);
             match xlsx::write_summary(&xlsx_results, &xlsx_path) {
-                Ok(()) => log_line(&format!(
-                    "XLSX  导出 -> {}  ({} 行)",
-                    xlsx_path.display(),
-                    xlsx_results.len()
-                )),
+                Ok(()) => {
+                    log_line(&format!(
+                        "XLSX  导出 -> {}  ({} 行)",
+                        xlsx_path.display(),
+                        xlsx_results.len()
+                    ));
+                    xlsx_written = Some(xlsx_path);
+                }
                 Err(e) => log_line(&format!("FAIL  导出 Excel 失败: {}", e)),
             }
         }
     }
 
     let _ = FileExt::unlock(&leader_fp);
+
+    if show_summary {
+        summary::show(&all_results, xlsx_written.as_deref());
+    }
+
     Ok(())
 }

@@ -1,9 +1,10 @@
 [package]
 name = "rename-invoice"
-version = "0.5.0"
+version = "0.5.1"
 edition = "2021"
 description = "发票 PDF 自动加价格前缀工具 (Rust 实现, 单 .exe + pdfium.dll)"
 license = "MIT"
+build = "build.rs"
 
 [[bin]]
 name = "rename-invoice"
@@ -16,10 +17,17 @@ chrono = "0.4"
 regex = "1"
 fs2 = "0.4"
 anyhow = "1"
+slint = "1.13"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.55"
 windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_System_Console", "Win32_UI_WindowsAndMessaging"] }
+
+[build-dependencies]
+slint-build = "1.13"
+
+[target.'cfg(windows)'.build-dependencies]
+winresource = "0.1"
 
 [profile.release]
 opt-level = 3

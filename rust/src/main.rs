@@ -14,6 +14,7 @@ mod extract;
 mod log_audit;
 mod process;
 mod silent;
+mod summary;
 mod xlsx;
 mod install;
 
