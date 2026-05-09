@@ -159,6 +159,37 @@ pub fn silent_main(paths: &[PathBuf], show_summary: bool, want_xlsx: bool) -> Re
         }
     }
 
+    // 写 xlsx 之前再 drain 一次, 捕获处理期间晚到的右键 (典型多选场景)
+    loop {
+        let raw_paths = drain_queue();
+        if raw_paths.is_empty() {
+            break;
+        }
+        let mut pdfs: Vec<PathBuf> = Vec::new();
+        for raw in &raw_paths {
+            let p = Path::new(raw);
+            if !p.exists() {
+                log_line(&format!("FAIL  (silent) 路径不存在: {}", raw));
+                continue;
+            }
+            for pdf in collect_pdfs(p) {
+                let key = pdf.canonicalize().unwrap_or_else(|_| pdf.clone());
+                if seen.insert(key) {
+                    pdfs.push(pdf);
+                }
+            }
+        }
+        for pdf in &pdfs {
+            let r = process_pdf(pdf);
+            match r.status {
+                Status::Failed => log_line(&format!("FAIL  {}  原因: {}", r.original_name, r.message)),
+                Status::Skipped => log_line(&format!("SKIP  {}  ({})", r.original_name, r.message)),
+                _ => {}
+            }
+            all_results.push(r);
+        }
+    }
+
     let mut xlsx_written: Option<PathBuf> = None;
     if want_xlsx {
         let xlsx_results: Vec<ProcessResult> = all_results
@@ -184,11 +215,12 @@ pub fn silent_main(paths: &[PathBuf], show_summary: bool, want_xlsx: bool) -> Re
         }
     }
 
-    let _ = FileExt::unlock(&leader_fp);
-
+    // Slint 窗口阻塞期间继续握 leader 锁, 否则会被晚到的右键进程抢去当新 leader,
+    // 表现为多个 Slint 窗口同时弹出.
     if show_summary {
         summary::show(&all_results, xlsx_written.as_deref());
     }
 
+    let _ = FileExt::unlock(&leader_fp);
     Ok(())
 }
