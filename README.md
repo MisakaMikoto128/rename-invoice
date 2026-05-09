@@ -10,7 +10,7 @@
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python 3.8+">
   <img src="https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey.svg" alt="Platform: Windows">
-  <a href="./CHANGELOG.md"><img src="https://img.shields.io/badge/version-0.3.0-green.svg" alt="Version 0.3.0"></a>
+  <a href="./CHANGELOG.md"><img src="https://img.shields.io/badge/version-0.4.0-green.svg" alt="Version 0.4.0"></a>
 </p>
 
 把中国大陆增值税电子发票 PDF 重命名成 `{价税合计}元-{原文件名}.pdf`，方便报销时一眼看到金额。
@@ -118,14 +118,21 @@ C:\Users\liuyu\tools\rename_invoice\
 只需要做**一次**：
 
 1. 双击 `C:\Users\liuyu\tools\rename_invoice\install_context.bat`
-2. 选安装模式：
-   - 回车（或输入 `1`）→ **静默模式**（默认）：右键时**完全无窗口**，结果写日志
-   - 输入 `2` → **静默 + 汇总窗口**：处理完后弹一个小窗口列出全部成功/跳过/失败
-   - 输入 `3` → **静默 + 自动导出 Excel**：处理完后在当前文件夹生成 `发票汇总_<时间戳>.xlsx`
-3. 看到三行 `[OK]` 即成功
-4. 按回车关闭
+2. 回答两个独立问题（回车=否）：
+   - **是否处理完后弹出 Tk 汇总窗口？** `[y/N]`（一个小窗口列出本批全部成功/跳过/失败）
+   - **是否处理完后在文件夹生成 Excel 汇总？** `[y/N]`（生成 `发票汇总_<时间戳>.xlsx`）
+3. 看到三行 `[OK]` 即成功，按回车关闭
 
-之后无论在哪个文件夹/PDF 上右键，都会出现 **"添加发票价格前缀"**。想换模式就再双击一次 `install_context.bat`，选另一项。
+四种组合都支持：
+
+| 选择 | 行为 |
+|------|------|
+| N + N | 纯静默，结果只写日志（推荐默认） |
+| Y + N | 静默 + Tk 汇总窗口 |
+| N + Y | 静默 + Excel 汇总 |
+| Y + Y | 静默 + Tk 窗口 + Excel 汇总（窗口里也会列出 xlsx 路径）|
+
+之后无论在哪个文件夹/PDF 上右键，都会出现 **"添加发票价格前缀"**。想换组合就再双击一次 `install_context.bat`。
 
 > ⚠️ Windows 11 用户可能要点 **"显示更多选项"**（或按 `Shift + F10`）才能看到这个菜单。
 
@@ -155,9 +162,11 @@ C:\Users\liuyu\tools\rename_invoice\
 | 任意文件夹（图标上） | 处理该文件夹下所有 PDF |
 | 任意文件夹空白处（资源管理器内） | 处理当前打开的文件夹下所有 PDF |
 
-右键路径**默认静默**：不弹任何窗口，结果只写到 `rename_invoice.log`。安装时还可以选：
-- `[2]` 静默 + Tk 汇总窗口（处理完弹窗口列出全部成功/跳过/失败）
-- `[3]` 静默 + Excel 汇总（处理完在当前文件夹生成 `发票汇总_YYYYMMDD-HHMMSS.xlsx`，含发票号码/开票日期/销售方/金额，末尾合计公式）
+右键路径**默认静默**：不弹任何窗口，结果只写到 `rename_invoice.log`。安装时可独立开启：
+- **汇总窗口**：处理完弹一个 Tk 窗口列出本批全部成功/跳过/失败
+- **Excel 汇总**：处理完在当前文件夹生成 `发票汇总_YYYYMMDD-HHMMSS.xlsx`，含发票号码/开票日期/销售方/金额（人民币货币格式 ¥X.XX），末尾合计 `=SUM(...)` 公式
+
+两个开关独立，可以全开、全关、或只开一个。备注名称和淘宝单号两列留空给你手填。
 
 ### 方式 C：双击当前目录
 
