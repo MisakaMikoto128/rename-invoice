@@ -128,3 +128,43 @@ def test_search_no_match(conn, project):
     ivs.create_invoice(conn, project_id=project.id, file_name="a.pdf",
                        seller="X")
     assert ivs.search_invoices(conn, "不存在") == []
+
+
+def test_stats_by_invoice_status(conn, project):
+    ivs.create_invoice(conn, project_id=project.id, file_name="a.pdf",
+                       amount=10.0, status="已报销")
+    ivs.create_invoice(conn, project_id=project.id, file_name="b.pdf",
+                       amount=20.0, status="已报销")
+    ivs.create_invoice(conn, project_id=project.id, file_name="c.pdf",
+                       amount=15.0, status="报销中")
+    stats = ivs.stats_by_invoice_status(conn)
+    assert stats["已报销"]["count"] == 2
+    assert stats["已报销"]["sum"] == 30.0
+    assert stats["报销中"]["count"] == 1
+    assert stats["未报销"]["count"] == 0
+    assert stats["未报销"]["sum"] == 0.0
+
+
+def test_stats_by_invoice_status_scoped(conn):
+    p1 = ps.create_project(conn, name="P1", folder_path="C:/sp1")
+    p2 = ps.create_project(conn, name="P2", folder_path="C:/sp2")
+    ivs.create_invoice(conn, project_id=p1.id, file_name="a.pdf",
+                       amount=10.0, status="已报销")
+    ivs.create_invoice(conn, project_id=p2.id, file_name="b.pdf",
+                       amount=99.0, status="已报销")
+    stats = ivs.stats_by_invoice_status(conn, project_id=p1.id)
+    assert stats["已报销"]["sum"] == 10.0
+
+
+def test_stats_by_project_status(conn):
+    p1 = ps.create_project(conn, name="P1", folder_path="C:/p1",
+                           status="已报销")
+    p2 = ps.create_project(conn, name="P2", folder_path="C:/p2",
+                           status="未报销")
+    ivs.create_invoice(conn, project_id=p1.id, file_name="x.pdf", amount=100.0)
+    ivs.create_invoice(conn, project_id=p2.id, file_name="y.pdf", amount=50.0)
+    stats = ivs.stats_by_project_status(conn)
+    assert stats["已报销"]["count"] == 1
+    assert stats["已报销"]["sum"] == 100.0
+    assert stats["未报销"]["count"] == 1
+    assert stats["未报销"]["sum"] == 50.0
