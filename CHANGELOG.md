@@ -4,6 +4,14 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-05-09
+
+### Changed
+
+- `install_context.bat` 安装交互改成**两个独立 y/n 问题**（汇总窗口? Excel 汇总?）取代原先的"三选一"，现在四种组合都支持（包括"窗口+Excel"两个都开）
+- Excel 金额列从纯数字 `0.00` 改成**人民币货币格式** `¥#,##0.00`（千分位 + 两位小数 + 负数红色），合计行同样格式
+- `install_context.ps1` 命令行参数：移除 `-NoSummary`，新增 `-NoPrompt`；`-Summary` 和 `-Xlsx` 改为可独立组合（**breaking change for scripted use**）
+
 ## [0.3.0] - 2026-05-09
 
 ### Added

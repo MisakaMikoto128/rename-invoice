@@ -383,6 +383,9 @@ def c(text, color):
 XLSX_HEADERS = ['发票文件名称', '发票号码', '开票日期', '销售方名称',
                 '备注名称', '淘宝单号', '金额']
 
+# Excel 人民币货币格式 (¥ 符号 + 千分位 + 两位小数, 负数加红色)
+RMB_CURRENCY_FORMAT = '"¥"#,##0.00;[Red]"¥"-#,##0.00'
+
 
 def write_summary_xlsx(rows, output_path: Path):
     """
@@ -453,7 +456,7 @@ def write_summary_xlsx(rows, output_path: Path):
             cell = ws.cell(row=r, column=col_idx)
             cell.border = border
             if col_idx == 7:
-                cell.number_format = '0.00'
+                cell.number_format = RMB_CURRENCY_FORMAT
                 cell.alignment = right
             elif col_idx in (2, 3):
                 cell.alignment = center
@@ -466,7 +469,7 @@ def write_summary_xlsx(rows, output_path: Path):
         cell.fill = total_fill
         cell.font = total_font
         if col_idx == 7:
-            cell.number_format = '0.00'
+            cell.number_format = RMB_CURRENCY_FORMAT
             cell.alignment = right
         elif col_idx == 6:
             cell.alignment = right
