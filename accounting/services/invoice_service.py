@@ -1,7 +1,9 @@
 """Invoice CRUD."""
 import sqlite3
+from pathlib import Path
 from typing import List, Optional
 
+from accounting import extractor
 from accounting.models import Invoice, VALID_STATUS
 
 
@@ -129,3 +131,25 @@ def stats_by_project_status(conn: sqlite3.Connection) -> dict:
     for row in conn.execute(sql):
         out[row["status"]] = {"count": row["c"], "sum": float(row["s"])}
     return out
+
+
+def import_pdf(conn: sqlite3.Connection, project_id: int,
+               pdf_path: Path) -> Invoice:
+    """读 PDF -> 提字段 -> INSERT invoice 行. amount 为 None 时仍会插入."""
+    meta = extractor.extract(Path(pdf_path))
+    amt: Optional[float] = None
+    if meta.get("amount"):
+        try:
+            amt = float(meta["amount"])
+        except (TypeError, ValueError):
+            amt = None
+    return create_invoice(
+        conn,
+        project_id=project_id,
+        file_name=Path(pdf_path).name,
+        invoice_no=meta.get("invoice_no"),
+        invoice_date=meta.get("date"),
+        invoice_date_iso=meta.get("invoice_date_iso"),
+        seller=meta.get("seller"),
+        amount=amt,
+    )

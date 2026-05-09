@@ -1,4 +1,7 @@
 import pytest
+from unittest.mock import patch
+from pathlib import Path
+
 from accounting.services import project_service as ps
 from accounting.services import invoice_service as ivs
 
@@ -168,3 +171,51 @@ def test_stats_by_project_status(conn):
     assert stats["已报销"]["sum"] == 100.0
     assert stats["未报销"]["count"] == 1
     assert stats["未报销"]["sum"] == 50.0
+
+
+def test_import_pdf_creates_invoice(conn, project, tmp_path):
+    pdf = tmp_path / "test.pdf"
+    pdf.write_bytes(b"fake")
+    fake_meta = {
+        "amount": "16.60", "amount_reason": None,
+        "invoice_no": "25957", "date": "2025年11月18日",
+        "invoice_date_iso": "2025-11-18", "seller": "深圳市立创",
+    }
+    with patch("accounting.services.invoice_service.extractor.extract",
+               return_value=fake_meta):
+        inv = ivs.import_pdf(conn, project.id, pdf)
+    assert inv.invoice_no == "25957"
+    assert inv.invoice_date_iso == "2025-11-18"
+    assert inv.seller == "深圳市立创"
+    assert inv.amount == 16.60
+    assert inv.file_name == "test.pdf"
+
+
+def test_import_pdf_no_amount_still_creates(conn, project, tmp_path):
+    pdf = tmp_path / "bad.pdf"
+    pdf.write_bytes(b"x")
+    fake_meta = {
+        "amount": None, "amount_reason": "未找到中文大写金额",
+        "invoice_no": None, "date": None,
+        "invoice_date_iso": None, "seller": None,
+    }
+    with patch("accounting.services.invoice_service.extractor.extract",
+               return_value=fake_meta):
+        inv = ivs.import_pdf(conn, project.id, pdf)
+    assert inv.amount is None
+    assert inv.invoice_no is None
+
+
+def test_import_pdf_duplicate_filename_raises(conn, project, tmp_path):
+    pdf = tmp_path / "same.pdf"
+    pdf.write_bytes(b"x")
+    fake_meta = {
+        "amount": None, "amount_reason": None,
+        "invoice_no": None, "date": None,
+        "invoice_date_iso": None, "seller": None,
+    }
+    with patch("accounting.services.invoice_service.extractor.extract",
+               return_value=fake_meta):
+        ivs.import_pdf(conn, project.id, pdf)
+        with pytest.raises(Exception):
+            ivs.import_pdf(conn, project.id, pdf)
