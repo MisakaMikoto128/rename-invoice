@@ -1,13 +1,21 @@
 [package]
 name = "rename-invoice"
-version = "0.5.2"
+version = "0.5.3"
 edition = "2021"
 description = "发票 PDF 自动加价格前缀工具 (Rust 实现, 单 .exe + pdfium.dll)"
 license = "MIT"
 build = "build.rs"
 
 [[bin]]
+# console 子系统 (默认): install / uninstall / 直接模式
+# 父 shell (PowerShell / cmd) 同步等它退, stdin/stdout 正常.
 name = "rename-invoice"
+path = "src/main.rs"
+
+[[bin]]
+# windows 子系统: 注册表右键 verb 走这个, 启动时 0 cmd 窗口闪烁.
+# 子系统切换在 build.rs 里通过 cargo:rustc-link-arg-bin 设置.
+name = "rename-invoice-w"
 path = "src/main.rs"
 
 [dependencies]
