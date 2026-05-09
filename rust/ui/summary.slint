@@ -1,0 +1,90 @@
+// 处理结果汇总窗口
+
+import { Button, ScrollView, VerticalBox } from "std-widgets.slint";
+
+export struct ResultRow {
+    status: string,    // "OK" / "SKIP" / "FAIL"
+    name: string,
+    detail: string,
+    color-tag: int,    // 0=ok绿, 1=skip灰, 2=fail红
+}
+
+export component SummaryWindow inherits Window {
+    in property <string> header-text;
+    in property <[ResultRow]> rows;
+    in property <string> xlsx-line;
+    callback close-clicked;
+
+    title: "发票重命名结果";
+    icon: @image-url("../assets/icon-256.png");
+    preferred-width: 800px;
+    preferred-height: 460px;
+    min-width: 540px;
+    min-height: 280px;
+
+    VerticalBox {
+        padding: 12px;
+        spacing: 8px;
+
+        Text {
+            text: header-text;
+            font-size: 16px;
+            font-weight: 700;
+            horizontal-alignment: center;
+        }
+
+        Rectangle {
+            background: #f5f5f5;
+            border-color: #d0d0d0;
+            border-width: 1px;
+            border-radius: 4px;
+
+            ScrollView {
+                viewport-width: self.width;
+                VerticalLayout {
+                    padding: 6px;
+                    for r in rows: HorizontalLayout {
+                        spacing: 8px;
+                        padding: 2px;
+                        Text {
+                            text: "[" + r.status + "]";
+                            color: r.color-tag == 0 ? #1b8a3a
+                                 : r.color-tag == 1 ? #777777
+                                 : #c62828;
+                            font-family: "Consolas";
+                            font-size: 12px;
+                            min-width: 56px;
+                        }
+                        Text {
+                            text: r.detail != "" ? r.name + "  -- " + r.detail : r.name;
+                            color: r.color-tag == 0 ? #1b8a3a
+                                 : r.color-tag == 1 ? #555555
+                                 : #c62828;
+                            font-family: "Consolas";
+                            font-size: 12px;
+                            wrap: word-wrap;
+                            horizontal-stretch: 1;
+                        }
+                    }
+                }
+            }
+        }
+
+        if xlsx-line != "" : Text {
+            text: xlsx-line;
+            color: #1b8a3a;
+            font-size: 12px;
+            wrap: word-wrap;
+        }
+
+        HorizontalLayout {
+            alignment: end;
+            Button {
+                text: "关闭";
+                primary: true;
+                min-width: 100px;
+                clicked => { close-clicked(); }
+            }
+        }
+    }
+}

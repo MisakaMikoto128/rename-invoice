@@ -11,7 +11,7 @@
    rename-invoice.exe install
    ```
    它会问两个 y/n 问题：
-   - **是否处理完后弹出 Tk 汇总窗口?** [y/N] —— 暂时还没实现 GUI 窗口，回 N
+   - **是否处理完后弹出汇总窗口?** [y/N] —— 想看处理结果就回 y（Slint 原生窗口）
    - **是否处理完后在文件夹生成 Excel 汇总?** [y/N] —— 想要 Excel 就回 y
 
    然后右键菜单就装好了。
@@ -32,14 +32,15 @@ rename-invoice.exe uninstall
 解压后的 `rename-invoice-windows-x64/` 目录：
 
 ```
-rename-invoice.exe        主程序
+rename-invoice.exe        主程序 (图标已嵌入)
 pdfium.dll                Google PDFium PDF 解析库 (Apache-2.0)
 PDFIUM_LICENSE            PDFium 许可证 (再分发要求)
-assets/icon.ico           右键菜单图标
 README.md                 本说明
 ```
 
 **`pdfium.dll` 必须和 `rename-invoice.exe` 在同一目录**，否则程序会报"找不到 pdfium.dll"。
+
+`.exe` 自带程序图标和右键菜单图标（Windows ICON RESOURCE），不需要额外文件。
 
 ## 给开发者
 
@@ -86,20 +87,20 @@ rename-invoice.exe uninstall                  卸载右键菜单
 | Excel 汇总 + 货币格式 + SUM 公式 | ✅ (openpyxl) | ✅ (rust_xlsxwriter) |
 | 销售方坐标判断 | ✅ (PyMuPDF) | ✅ (PDFium) |
 | 安装两问交互 | ✅ (install_context.bat) | ✅ (`install` 子命令) |
-| Tk 汇总窗口 | ✅ (tkinter) | ❌ TODO |
+| 汇总窗口 | ✅ (tkinter) | ✅ (Slint 原生窗口) |
 | 部署 | 装 Python + pip install | 解压 zip 即用 |
-
-GUI 汇总窗口 (`--summary`) 在 Rust 版里暂未实现 —— 用 Excel 模式 (`--xlsx`) 看结果就行，体验更好。
 
 ## 用了哪些 crate
 
 - `pdfium-render` — 调 Google PDFium 解析 PDF (动态加载 pdfium.dll)
 - `rust_xlsxwriter` — 写 Excel
+- `slint` — 汇总窗口 GUI (`--summary` 用)
 - `regex` — 正则
 - `chrono` — 时间戳
 - `fs2` — 文件锁
 - `winreg` — 注册表
-- `windows-sys` — Win32 API (备用)
+- `windows-sys` — Win32 API
+- `winresource` (build) — .exe 嵌入 icon resource
 - `anyhow` — 错误处理
 
-Cargo.toml 里 `[profile.release]` 开了 `lto + strip + opt-level=3`, 单 .exe 约 3 MB.
+Cargo.toml 里 `[profile.release]` 开了 `lto + strip + opt-level=3`, 单 .exe 约 10 MB (Slint UI 引擎占大头).

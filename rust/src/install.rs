@@ -31,14 +31,8 @@ pub fn install(_summary: bool, _xlsx: bool) -> Result<()> {
     let exe = current_exe()?;
     let exe_str = exe.to_string_lossy().to_string();
 
-    // 找 icon.ico (与 .exe 同目录的 assets/icon.ico, 没有就用 .exe 自身)
-    let icon_path = {
-        let candidate = exe.parent().map(|p| p.join("assets").join("icon.ico"));
-        match candidate {
-            Some(p) if p.exists() => p,
-            _ => exe.clone(),
-        }
-    };
+    // 图标: 直接用 .exe 自身嵌入的 ICON RESOURCE (winresource build), 索引 0
+    let icon_path = format!("{},0", exe_str);
 
     println!("[INFO] 当前 .exe: {}", exe_str);
     println!();
@@ -50,7 +44,7 @@ pub fn install(_summary: bool, _xlsx: bool) -> Result<()> {
 
     if interactive {
         println!("请回答两个独立问题 (回车=否, 都选否就是纯静默):");
-        print!("  1) 处理完后弹出 Tk 汇总窗口? [y/N] ");
+        print!("  1) 处理完后弹出 汇总窗口? [y/N] ");
         let _ = stdout().flush();
         let mut buf = String::new();
         stdin().lock().read_line(&mut buf).ok();
@@ -108,7 +102,7 @@ pub fn install(_summary: bool, _xlsx: bool) -> Result<()> {
     for (path, cmd, desc) in &targets {
         let (shell_key, _) = hkcu.create_subkey(path)?;
         shell_key.set_value("", &MENU_TEXT.to_string())?;
-        shell_key.set_value("Icon", &icon_path.to_string_lossy().to_string())?;
+        shell_key.set_value("Icon", &icon_path)?;
         let (cmd_key, _) = hkcu.create_subkey(format!("{}\\command", path))?;
         cmd_key.set_value("", &cmd.to_string())?;
         println!("[OK] {}: HKCU\\{}", desc, path);
@@ -121,7 +115,7 @@ pub fn install(_summary: bool, _xlsx: bool) -> Result<()> {
     println!("  - 在文件夹空白处右键 -> '{}'", MENU_TEXT);
     println!();
     if want_summary {
-        println!("(汇总窗口: 处理完后会弹一个 Tk 窗口列出全部结果) [TODO Rust 版本暂未实现]");
+        println!("(汇总窗口: 处理完后会弹一个 Slint 原生窗口列出全部结果)");
     }
     if want_xlsx {
         println!("(Excel 导出: 处理完后会在当前文件夹生成 发票汇总_<时间戳>.xlsx)");
