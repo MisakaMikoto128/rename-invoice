@@ -29,10 +29,12 @@
 
 - ✅ 三层财务校验：中文大写↔阿拉伯数字精确匹配 + 最大 ¥ 值检查
 - ✅ 三种使用方式：拖放、双击、Windows 右键菜单
+- ✅ 右键菜单**默认全静默**（零 cmd 窗口闪烁），多选 N 个 PDF 通过文件锁合并为单次处理
+- ✅ 可选 **Excel 汇总**：处理完后在文件夹生成 `发票汇总_<时间戳>.xlsx`（发票号/日期/销售方/金额 + 合计公式 + 人民币货币格式）
+- ✅ 可选 **Tk 汇总窗口**：处理完弹一个窗口列出本批结果（成功/跳过/失败）
 - ✅ 幂等可重跑：已加前缀的文件自动跳过
 - ✅ 失败安全：任何不确定就保留原名 + 红色高亮 + 审计日志
 - ✅ 不需要管理员权限（HKCU 注册右键菜单）
-- ✅ 零配置，一个 `pip install pymupdf` 即可使用
 - ✅ 100% 离线，不上传任何数据
 
 ## 安装
@@ -40,7 +42,7 @@
 ```bash
 git clone <仓库地址> rename_invoice
 cd rename_invoice
-pip install -r requirements.txt
+pip install -r requirements.txt   # pymupdf + openpyxl
 # (可选) 注册 Windows 右键菜单
 .\install_context.bat
 ```
@@ -83,7 +85,7 @@ pip install -r requirements.txt
 
 - Windows 10 / 11
 - Python 3.8+ 已安装并在 PATH 里
-- PyMuPDF 库（`pip install pymupdf`）
+- 依赖库：`pymupdf`（PDF 解析）、`openpyxl`（Excel 汇总，可选不用就不会触发）
 
 ### 检查环境
 
@@ -91,13 +93,13 @@ pip install -r requirements.txt
 
 ```bash
 python --version
-python -c "import fitz; print('OK', fitz.__doc__)"
+python -c "import fitz, openpyxl; print('OK')"
 ```
 
-如果报 `ModuleNotFoundError: No module named 'fitz'`：
+如果报缺包：
 
 ```bash
-pip install pymupdf
+pip install -r requirements.txt
 ```
 
 ### 工具的安装位置
@@ -281,8 +283,10 @@ C:\Users\liuyu\tools\rename_invoice\rename_invoice.log
 格式：
 
 ```
-[2026-04-28 15:02:26] OK  原文件名.pdf  ->  98.01元-原文件名.pdf  (金额=98.01)
+[2026-04-28 15:02:26] OK    原文件名.pdf  ->  98.01元-原文件名.pdf  (金额=98.01)
 [2026-04-28 15:02:30] FAIL  某文件.pdf  原因: 中文大写金额与 ¥ 值不匹配. ...
+[2026-05-08 16:11:02] SKIP  98.01元-某发票.pdf  (已有价格前缀, 跳过)
+[2026-05-08 16:11:02] XLSX  导出 -> D:\报销\发票汇总_20260508-161102.xlsx  (6 行)
 ```
 
 需要时可以用日志反查或回滚。日志只追加不清空，体积不会爆炸（每行约 200 字节，1 万次操作约 2MB）。
@@ -412,16 +416,22 @@ pip install --upgrade pymupdf
 
 ### Q：为什么不做 GUI？
 
-YAGNI。三种命令式入口已经覆盖所有场景。如果想看处理结果，安装时选 `[2]` 静默+汇总窗口模式即可（Tk 自带，无新依赖）。
+YAGNI。三种命令式入口已经覆盖所有场景。需要可视反馈时，安装时把"汇总窗口"那一问选 `y` 即可（Tk 自带，零依赖）。
 
 ### Q：右键之后什么都没发生，是不是工具坏了？
 
-默认装的是**静默模式**，处理无窗口、无声音。验证方式：
+默认装的是**纯静默模式**，处理无窗口、无声音。验证方式：
 
 1. 看文件名是否多了 `XX元-` 前缀
 2. 打开 `C:\Users\liuyu\tools\rename_invoice\rename_invoice.log` 看最近的记录
 
-如果都没有变化，重新双击 `install_context.bat` 选 `[2]`，下次右键就会弹汇总窗口告诉你结果。
+如果都没有变化，重新双击 `install_context.bat`，第一问回 `y`（汇总窗口），下次右键就会弹窗告诉你结果。
+
+### Q：怎么生成 Excel 汇总？
+
+双击 `install_context.bat`，第二问回 `y`（"处理完后在文件夹生成 Excel 汇总?"）。之后每次右键，都会在被处理的文件夹下生成 `发票汇总_YYYYMMDD-HHMMSS.xlsx`。
+
+列：发票文件名 / 发票号码 / 开票日期 / 销售方名称 / **备注名称（空，留你手填）** / **淘宝单号（空，留你手填）** / 金额。末行 `合计 = SUM(...)` 是公式不是死值，改任一行金额能自动重算。金额列是人民币货币格式（`¥X.XX`，负数红色）。
 
 ### Q：提取的精度是多少？
 
@@ -451,6 +461,8 @@ python test_parser.py
 ## 设计决策（给好奇的你）
 
 - **为什么用 Python + PyMuPDF？** PyMuPDF 是开源 PDF 解析里中文支持最稳的，一次提取 + 自带文字层定位，不依赖外部 OCR。
+- **为什么右键菜单走 pythonw.exe + 文件锁队列？** Windows 注册表 verb 模型每选一个文件就启一次进程；用 `pythonw.exe` 直接调可以零 cmd 窗口闪烁，并发的 N 个进程通过 `.queue.txt` + `msvcrt.locking` 选出一个 leader 统一处理 —— 避免 N 张发票产生 N 条日志批次或 N 个汇总窗口。
+- **为什么销售方名称用坐标判断而不是文本顺序？** PyMuPDF 的文本提取顺序在不同发票布局里不一致（旧版"label 在前 / value 在后"和新版"label-value 同行"），但所有增值税发票都遵循"购方左 / 销方右"的版式约定。判断公司名块的水平中点 vs 页面中线是最稳的。
 - **为什么用 `.bat` 而不是 `.ps1` 当主入口？** PowerShell 默认 ExecutionPolicy 限制要绕，`.bat` 双击直接跑。注册表的右键命令也一致用 `.bat`。
 - **为什么用 HKCU 不用 HKLM？** 不需要管理员，不污染其他账户。坏处是别的 Windows 账户登录看不到这个右键菜单（你是单用户机器，无所谓）。
 - **为什么不做撤销？** 重命名是纯前缀添加，原始信息没丢失，手动改回比写撤销逻辑还快。带撤销反而引入复杂度和数据丢失风险。
