@@ -47,3 +47,40 @@ def test_get_invoice(conn, project):
 
 def test_get_invoice_missing(conn):
     assert ivs.get_invoice(conn, 9999) is None
+
+
+def test_update_invoice_field(conn, project):
+    inv = ivs.create_invoice(conn, project_id=project.id, file_name="a.pdf")
+    ivs.update_invoice_field(conn, inv.id, "remark", "hello")
+    assert ivs.get_invoice(conn, inv.id).remark == "hello"
+
+
+def test_update_invoice_field_invalid_column_raises(conn, project):
+    inv = ivs.create_invoice(conn, project_id=project.id, file_name="a.pdf")
+    with pytest.raises(ValueError):
+        ivs.update_invoice_field(conn, inv.id, "DROP TABLE invoice", "x")
+
+
+def test_update_invoice_status(conn, project):
+    inv = ivs.create_invoice(conn, project_id=project.id, file_name="a.pdf")
+    ivs.update_invoice_status(conn, inv.id, "已报销")
+    assert ivs.get_invoice(conn, inv.id).status == "已报销"
+
+
+def test_update_invoice_status_invalid_raises(conn, project):
+    inv = ivs.create_invoice(conn, project_id=project.id, file_name="a.pdf")
+    with pytest.raises(ValueError):
+        ivs.update_invoice_status(conn, inv.id, "胡说")
+
+
+def test_delete_invoice(conn, project):
+    inv = ivs.create_invoice(conn, project_id=project.id, file_name="a.pdf")
+    ivs.delete_invoice(conn, inv.id)
+    assert ivs.get_invoice(conn, inv.id) is None
+
+
+def test_delete_project_cascades_invoices(conn, project):
+    ivs.create_invoice(conn, project_id=project.id, file_name="a.pdf")
+    ivs.create_invoice(conn, project_id=project.id, file_name="b.pdf")
+    ps.delete_project(conn, project.id)
+    assert ivs.list_invoices(conn, project.id) == []
