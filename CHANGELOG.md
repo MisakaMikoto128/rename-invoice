@@ -4,6 +4,25 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-05-09
+
+### Added
+
+- **Excel 汇总导出**：右键安装时新增 `[3]` 模式，处理完后在目标文件夹生成 `发票汇总_YYYYMMDD-HHMMSS.xlsx`
+- 表头：发票文件名称 / 发票号码 / 开票日期 / 销售方名称 / 备注名称（留空手填）/ 淘宝单号（留空手填）/ 金额
+- 末尾合计行使用 `=SUM(G2:Gn)` 公式（不是硬编码值，改任一金额能自动重算）
+- 表头粗体白字蓝底、合计行黄底加粗、首行冻结、列宽预设
+- 字段提取支持两种发票布局：
+  - 旧版（label 在前 / value 在后，独立行的 20 位发票号码）
+  - 新版（"发票号码: 数字" 同行；销售方名称用首页坐标判断，水平中点 > 页面中线者为销售方）
+- `--xlsx` 命令行 flag（可与 `--silent` 任意组合，也支持直接模式）
+- `install_context.ps1` 加 `-Xlsx` switch（脚本化使用）
+- `requirements.txt` 加 `openpyxl>=3.1.0` 依赖
+
+### Changed
+
+- `process_pdf` 返回值从 `(status, message)` 扩展为 `(status, message, metadata, final_path)`，metadata 同时供重命名和 Excel 用，避免重复读 PDF
+
 ## [0.2.0] - 2026-05-08
 
 ### Added

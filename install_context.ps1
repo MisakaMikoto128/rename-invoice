@@ -7,13 +7,16 @@
 # 多选文件并发右键时, 通过文件锁合并为一次处理 (见 rename_invoice.py).
 #
 # 用法:
-#   install_context.ps1                  # 交互式: 默认静默, 可选静默+汇总窗口
+#   install_context.ps1                  # 交互式: [1] 静默 / [2] 静默+汇总窗口 / [3] 静默+Excel
 #   install_context.ps1 -Summary         # 非交互: 直接装"静默+汇总窗口"
+#   install_context.ps1 -Xlsx            # 非交互: 直接装"静默+Excel 汇总"
 #   install_context.ps1 -NoSummary       # 非交互: 直接装"静默"
 [CmdletBinding(DefaultParameterSetName = 'Interactive')]
 Param(
     [Parameter(ParameterSetName = 'Summary')]
     [switch]$Summary,
+    [Parameter(ParameterSetName = 'Xlsx')]
+    [switch]$Xlsx,
     [Parameter(ParameterSetName = 'NoSummary')]
     [switch]$NoSummary
 )
@@ -65,23 +68,37 @@ Write-Host "[INFO] 脚本路径:    $PyScript" -ForegroundColor Gray
 Write-Host ""
 
 # --- 选择安装模式 ---
-$WantSummary = $false
-if ($Summary)        { $WantSummary = $true }
-elseif ($NoSummary)  { $WantSummary = $false }
+# Mode: 'silent' | 'summary' | 'xlsx'
+$Mode = 'silent'
+if ($Summary)        { $Mode = 'summary' }
+elseif ($Xlsx)       { $Mode = 'xlsx' }
+elseif ($NoSummary)  { $Mode = 'silent' }
 else {
     Write-Host "请选择安装模式:" -ForegroundColor Cyan
     Write-Host "  [1] 静默 (默认) - 右键完全无窗口, 仅写日志"
     Write-Host "  [2] 静默 + 处理后弹出汇总窗口"
+    Write-Host "  [3] 静默 + 自动导出 Excel 汇总到当前文件夹"
     $choice = Read-Host "选择 (回车=1)"
-    if ($choice.Trim() -eq '2') { $WantSummary = $true }
+    switch ($choice.Trim()) {
+        '2' { $Mode = 'summary' }
+        '3' { $Mode = 'xlsx' }
+        default { $Mode = 'silent' }
+    }
 }
 
-if ($WantSummary) {
-    Write-Host "[INFO] 安装模式: 静默 + 汇总窗口" -ForegroundColor Cyan
-    $ExtraArgs = '--silent --summary'
-} else {
-    Write-Host "[INFO] 安装模式: 静默 (无窗口)" -ForegroundColor Cyan
-    $ExtraArgs = '--silent'
+switch ($Mode) {
+    'summary' {
+        Write-Host "[INFO] 安装模式: 静默 + 汇总窗口" -ForegroundColor Cyan
+        $ExtraArgs = '--silent --summary'
+    }
+    'xlsx' {
+        Write-Host "[INFO] 安装模式: 静默 + Excel 汇总" -ForegroundColor Cyan
+        $ExtraArgs = '--silent --xlsx'
+    }
+    default {
+        Write-Host "[INFO] 安装模式: 静默 (无窗口)" -ForegroundColor Cyan
+        $ExtraArgs = '--silent'
+    }
 }
 
 # %1 = file path (file/folder right-click), %V = current dir (background right-click)
@@ -117,10 +134,10 @@ Write-Host "  - 在任意 PDF 上右键 -> '$MenuText'"
 Write-Host "  - 在任意文件夹上右键 -> '$MenuText'"
 Write-Host "  - 在文件夹空白处右键 -> '$MenuText'"
 Write-Host ""
-if ($WantSummary) {
-    Write-Host "(已启用汇总窗口: 处理完后会弹一个 Tk 窗口列出全部结果)" -ForegroundColor Yellow
-} else {
-    Write-Host "(静默模式: 完全无窗口, 结果写入 rename_invoice.log)" -ForegroundColor Yellow
+switch ($Mode) {
+    'summary' { Write-Host "(已启用汇总窗口: 处理完后会弹一个 Tk 窗口列出全部结果)" -ForegroundColor Yellow }
+    'xlsx'    { Write-Host "(已启用 Excel 导出: 处理完后会在当前文件夹生成 发票汇总_<时间戳>.xlsx)" -ForegroundColor Yellow }
+    default   { Write-Host "(静默模式: 完全无窗口, 结果写入 rename_invoice.log)" -ForegroundColor Yellow }
 }
 Write-Host "(Win11 用户可能需要点'显示更多选项'才能看到自定义菜单)" -ForegroundColor Yellow
 Write-Host ""

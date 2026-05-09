@@ -10,7 +10,7 @@
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python 3.8+">
   <img src="https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey.svg" alt="Platform: Windows">
-  <a href="./CHANGELOG.md"><img src="https://img.shields.io/badge/version-0.2.0-green.svg" alt="Version 0.2.0"></a>
+  <a href="./CHANGELOG.md"><img src="https://img.shields.io/badge/version-0.3.0-green.svg" alt="Version 0.3.0"></a>
 </p>
 
 把中国大陆增值税电子发票 PDF 重命名成 `{价税合计}元-{原文件名}.pdf`，方便报销时一眼看到金额。
@@ -121,6 +121,7 @@ C:\Users\liuyu\tools\rename_invoice\
 2. 选安装模式：
    - 回车（或输入 `1`）→ **静默模式**（默认）：右键时**完全无窗口**，结果写日志
    - 输入 `2` → **静默 + 汇总窗口**：处理完后弹一个小窗口列出全部成功/跳过/失败
+   - 输入 `3` → **静默 + 自动导出 Excel**：处理完后在当前文件夹生成 `发票汇总_<时间戳>.xlsx`
 3. 看到三行 `[OK]` 即成功
 4. 按回车关闭
 
@@ -154,7 +155,9 @@ C:\Users\liuyu\tools\rename_invoice\
 | 任意文件夹（图标上） | 处理该文件夹下所有 PDF |
 | 任意文件夹空白处（资源管理器内） | 处理当前打开的文件夹下所有 PDF |
 
-右键路径**默认静默**：不弹任何窗口，结果只写到 `rename_invoice.log`。如果想看处理结果，安装时选 `[2]` 启用汇总窗口（处理完弹一个 Tk 窗口列出全部成功/跳过/失败）。
+右键路径**默认静默**：不弹任何窗口，结果只写到 `rename_invoice.log`。安装时还可以选：
+- `[2]` 静默 + Tk 汇总窗口（处理完弹窗口列出全部成功/跳过/失败）
+- `[3]` 静默 + Excel 汇总（处理完在当前文件夹生成 `发票汇总_YYYYMMDD-HHMMSS.xlsx`，含发票号码/开票日期/销售方/金额，末尾合计公式）
 
 ### 方式 C：双击当前目录
 
@@ -177,6 +180,9 @@ pythonw C:\Users\liuyu\tools\rename_invoice\rename_invoice.py --silent "D:\path"
 
 # 静默 + 处理完弹 Tk 汇总窗口
 pythonw C:\Users\liuyu\tools\rename_invoice\rename_invoice.py --silent --summary "D:\path"
+
+# 静默 + 处理完导出 Excel 汇总到目标文件夹
+pythonw C:\Users\liuyu\tools\rename_invoice\rename_invoice.py --silent --xlsx "D:\path"
 ```
 
 无参数时扫描当前工作目录。
