@@ -35,7 +35,7 @@ def build_main_view(page: ft.Page, state: AppState,
     trashed_count = len(ps.list_trashed_projects(state.conn))
     trash_btn_label = f"回收站 ({trashed_count})" if trashed_count else "回收站"
     trash_btn = ft.TextButton(
-        text=trash_btn_label,
+        trash_btn_label,
         icon=ft.Icons.DELETE_SWEEP,
         on_click=lambda _e: on_open_trash(),
     )
