@@ -1,7 +1,7 @@
 """Flet entry. Routes between main_view and project_view."""
 import flet as ft
 
-from accounting import db
+from accounting import db, settings
 from accounting.ui.main_view import build_main_view
 from accounting.ui.project_view import build_project_view
 from accounting.ui.state import AppState
@@ -11,7 +11,9 @@ def main(page: ft.Page):
     page.title = "rename-invoice / 账目管理"
     page.window.width = 1200
     page.window.height = 720
-    page.theme_mode = ft.ThemeMode.LIGHT
+    saved_theme = settings.get(settings.KEY_THEME_MODE, "light")
+    page.theme_mode = (ft.ThemeMode.DARK if saved_theme == "dark"
+                       else ft.ThemeMode.LIGHT)
     page.padding = 0
 
     state = AppState(db_path=str(db.default_db_path()))
