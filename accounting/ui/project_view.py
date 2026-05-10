@@ -4,6 +4,7 @@ import flet as ft
 
 from accounting.models import VALID_STATUS
 from accounting.services import project_service as ps
+from accounting.services import invoice_service as ivs
 from accounting.ui.state import AppState
 from accounting.ui.widgets.status_chip import status_chip
 
@@ -37,8 +38,28 @@ def build_project_view(page: ft.Page, state: AppState,
                           on_click=lambda _e: print("TODO M3")),
     ])
 
+    invoices = ivs.list_invoices(state.conn, p.id)
+    pdf_items = []
+    for inv in invoices:
+        pdf_items.append(ft.ListTile(
+            leading=ft.Icon(ft.Icons.PICTURE_AS_PDF, color=ft.Colors.RED_400),
+            title=ft.Text(inv.file_name, size=12, no_wrap=True,
+                          overflow=ft.TextOverflow.ELLIPSIS),
+            dense=True,
+            on_click=lambda _e, iid=inv.id: print(f"TODO highlight row for {iid}"),
+        ))
+
     pdf_list_pane = ft.Container(
-        content=ft.Text("(PDF list - Task 8)"),
+        content=ft.Column([
+            ft.Text(f"PDF ({len(invoices)})", size=14, weight=ft.FontWeight.W_500),
+            ft.Divider(height=1),
+            ft.ListView(controls=pdf_items, expand=True, spacing=0)
+            if pdf_items else ft.Container(
+                content=ft.Text("(空 — 拖入 PDF 或点上方导入)",
+                                color=ft.Colors.OUTLINE, size=12),
+                padding=20,
+            ),
+        ]),
         width=280, padding=10, bgcolor=ft.Colors.SURFACE_CONTAINER_LOW,
     )
     table_pane = ft.Container(
