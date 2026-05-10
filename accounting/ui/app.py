@@ -87,12 +87,20 @@ def main(page: ft.Page):
                                   project_count=count,
                                   on_migrate=trigger_migrate)
 
+        def open_invoice_in_project(project_id, file_name):
+            # Pre-fill the in-project search filter so the table shows just
+            # this row. render_project does NOT reset state.search_query, so
+            # setting it before the call is picked up by build_project_view.
+            state.search_query = file_name
+            render_project(project_id)
+
         container.content = build_main_view(
             page, state,
             on_open_project=lambda pid: render_project(pid),
             on_new_project=new_project,
             on_delete_project=delete_project_action,
             on_open_settings=open_settings,
+            on_open_invoice_in_project=open_invoice_in_project,
         )
         page.update()
 
