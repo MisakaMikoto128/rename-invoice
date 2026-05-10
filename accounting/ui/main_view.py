@@ -42,7 +42,7 @@ def _build_sidebar(state: AppState, on_open_project, on_new_project) -> ft.Contr
             ft.ListView(controls=items, expand=True, spacing=2)
             if items else ft.Container(
                 content=ft.Text("还没有项目, 点上面新建一个", color=ft.Colors.OUTLINE),
-                padding=20, alignment=ft.alignment.center,
+                padding=20, alignment=ft.Alignment.CENTER,
             ),
         ]),
         width=280,
