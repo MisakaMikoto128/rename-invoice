@@ -219,3 +219,67 @@ def test_import_pdf_duplicate_filename_raises(conn, project, tmp_path):
         ivs.import_pdf(conn, project.id, pdf)
         with pytest.raises(Exception):
             ivs.import_pdf(conn, project.id, pdf)
+
+
+def test_update_invoice_fields_batch(conn, project):
+    inv = ivs.create_invoice(conn, project_id=project.id, file_name="a.pdf")
+    ivs.update_invoice_fields(conn, inv.id, remark="hi", taobao_order="T1")
+    got = ivs.get_invoice(conn, inv.id)
+    assert got.remark == "hi"
+    assert got.taobao_order == "T1"
+
+
+def test_update_invoice_fields_invalid_column_raises(conn, project):
+    inv = ivs.create_invoice(conn, project_id=project.id, file_name="a.pdf")
+    with pytest.raises(ValueError):
+        ivs.update_invoice_fields(conn, inv.id, status="已报销")  # status is not editable via this path
+
+
+def test_update_invoice_fields_no_changes_is_noop(conn, project):
+    inv = ivs.create_invoice(conn, project_id=project.id, file_name="a.pdf")
+    ivs.update_invoice_fields(conn, inv.id)  # no kwargs, no-op
+    assert ivs.get_invoice(conn, inv.id).remark is None
+
+
+def test_import_pdf_with_copy(conn, project, tmp_path):
+    src = tmp_path / "src" / "x.pdf"
+    src.parent.mkdir()
+    src.write_bytes(b"fake pdf")
+    project_dir = tmp_path / "proj"
+    project_dir.mkdir()
+
+    fake_meta = {
+        "amount": "16.60", "amount_reason": None,
+        "invoice_no": "1", "date": None,
+        "invoice_date_iso": None, "seller": "S",
+    }
+    with patch("accounting.services.invoice_service.extractor.extract",
+               return_value=fake_meta):
+        inv = ivs.import_pdf(conn, project.id, src,
+                             copy_to=project_dir)
+    # Original is still in src; a copy is now in project_dir
+    assert (project_dir / "x.pdf").exists()
+    assert src.exists()
+    assert inv.file_name == "x.pdf"
+
+
+def test_import_pdf_copy_collision_uses_safe_name(conn, project, tmp_path):
+    """If destination has a same-name file, a (2)/(3) suffix is added."""
+    src = tmp_path / "x.pdf"
+    src.write_bytes(b"v2")
+    project_dir = tmp_path / "proj"
+    project_dir.mkdir()
+    (project_dir / "x.pdf").write_bytes(b"v1")  # pre-existing
+
+    fake_meta = {
+        "amount": None, "amount_reason": None, "invoice_no": None,
+        "date": None, "invoice_date_iso": None, "seller": None,
+    }
+    with patch("accounting.services.invoice_service.extractor.extract",
+               return_value=fake_meta):
+        inv = ivs.import_pdf(conn, project.id, src,
+                             copy_to=project_dir)
+    assert inv.file_name in ("x (2).pdf",)
+    assert (project_dir / "x (2).pdf").exists()
+    # Pre-existing not overwritten:
+    assert (project_dir / "x.pdf").read_bytes() == b"v1"
