@@ -61,3 +61,6 @@ rust/release/
 
 # 单元测试用的脱敏 PDF 样本, 本地放, 不入库
 tests/_pdf_samples/
+
+# PyInstaller / flet pack 产物
+*.spec
