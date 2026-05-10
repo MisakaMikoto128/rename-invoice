@@ -70,16 +70,30 @@ def build_project_view(page: ft.Page, state: AppState,
         if not files:
             return
         project_dir = _Path(p.folder_path)
+        imported = 0
+        duplicates = 0
+        failed: list[tuple[str, str]] = []
         for f in files:
             if not f.path:
                 continue
             try:
-                ivs.import_pdf(state.conn, p.id, _Path(f.path),
-                               copy_to=project_dir)
+                result = ivs.import_pdf(state.conn, p.id, _Path(f.path),
+                                        copy_to=project_dir)
+                if result is None:
+                    duplicates += 1
+                else:
+                    imported += 1
             except Exception as ex:
-                page.show_dialog(ft.SnackBar(
-                    content=ft.Text(f"导入失败: {f.name} — {ex}")))
-                page.update()
+                failed.append((f.name, str(ex)))
+        parts = [f"导入 {imported}"]
+        if duplicates:
+            parts.append(f"跳过 {duplicates} 重复")
+        if failed:
+            parts.append(f"{len(failed)} 失败")
+        msg = "，".join(parts)
+        if failed:
+            msg += " — " + "; ".join(f"{n}: {e}" for n, e in failed)
+        page.show_dialog(ft.SnackBar(content=ft.Text(msg)))
         on_changed()
 
     async def on_export_xlsx_click(_e):
