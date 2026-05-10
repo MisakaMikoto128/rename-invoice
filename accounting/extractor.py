@@ -4,8 +4,12 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-# rename_invoice.py 在 repo 根, 不是 package - 把 repo 根加进 sys.path
-_REPO_ROOT = Path(__file__).resolve().parent.parent
+# rename_invoice.py 在 repo 根, 不是 package - 把 repo 根加进 sys.path.
+# 在 PyInstaller 打包后的 frozen 环境里, 文件在 sys._MEIPASS 临时目录, 不在源码树。
+if getattr(sys, "frozen", False):
+    _REPO_ROOT = Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent))
+else:
+    _REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
