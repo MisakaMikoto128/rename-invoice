@@ -1,8 +1,9 @@
-"""Flet entry. `python -m accounting.ui.app` launches the GUI."""
+"""Flet entry. Routes between main_view and project_view."""
 import flet as ft
 
 from accounting import db
 from accounting.ui.main_view import build_main_view
+from accounting.ui.project_view import build_project_view
 from accounting.ui.state import AppState
 
 
@@ -19,16 +20,23 @@ def main(page: ft.Page):
 
     container = ft.Container(expand=True)
 
-    def render():
+    def render_main():
+        state.select_project(None)
         container.content = build_main_view(
             page, state,
-            on_open_project=lambda pid: print(f"TODO Task 7: open project {pid}"),
-            on_new_project=lambda: print("TODO Task 13: new project dialog"),
+            on_open_project=lambda pid: render_project(pid),
+            on_new_project=lambda: print("TODO Task 13"),
         )
         page.update()
 
+    def render_project(project_id):
+        state.refresh_projects()
+        state.select_project(project_id)
+        container.content = build_project_view(page, state, on_back=render_main)
+        page.update()
+
     page.add(container)
-    render()
+    render_main()
 
 
 if __name__ == "__main__":
