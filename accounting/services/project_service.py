@@ -68,3 +68,21 @@ def update_project(conn: sqlite3.Connection, project_id: int,
 def delete_project(conn: sqlite3.Connection, project_id: int) -> None:
     conn.execute("DELETE FROM project WHERE id = ?", (project_id,))
     conn.commit()
+
+
+def set_project_status_cascade(conn: sqlite3.Connection, project_id: int,
+                               status: str) -> None:
+    """Set project status AND cascade the same status to every invoice in the project."""
+    if status not in VALID_STATUS:
+        raise ValueError(f"Invalid status: {status!r}")
+    conn.execute(
+        "UPDATE project SET status = ?, updated_at = CURRENT_TIMESTAMP "
+        "WHERE id = ?",
+        (status, project_id),
+    )
+    conn.execute(
+        "UPDATE invoice SET status = ?, updated_at = CURRENT_TIMESTAMP "
+        "WHERE project_id = ?",
+        (status, project_id),
+    )
+    conn.commit()
