@@ -10,7 +10,7 @@
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python 3.8+">
   <img src="https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey.svg" alt="Platform: Windows">
-  <a href="./CHANGELOG.md"><img src="https://img.shields.io/badge/version-0.4.0-green.svg" alt="Version 0.4.0"></a>
+  <a href="./CHANGELOG.md"><img src="https://img.shields.io/badge/version-0.5.0-green.svg" alt="Version 0.5.0"></a>
 </p>
 
 把中国大陆增值税电子发票 PDF 重命名成 `{价税合计}元-{原文件名}.pdf`，方便报销时一眼看到金额。
@@ -480,6 +480,25 @@ python test_parser.py
 4. 新增功能请同步更新 `CHANGELOG.md` 的 `[Unreleased]` 区段
 
 如果你的发票样本无法识别，欢迎在 issue 里提供**脱敏后的**样本（公司名、号码可涂黑，金额字段保留）。
+
+---
+
+## 本地账目管理 GUI (v0.5.0+)
+
+如果你想跨多次报销批次跟踪发票, rename-invoice 还内置一个 Flet 桌面应用:
+
+```bash
+pip install -r requirements.txt   # 包含 flet
+python -m accounting.ui.app
+```
+
+启动后会出现一个 1200×720 的窗口:
+
+- **主窗口**: 左侧项目列表, 右侧跨项目的报销状态统计 (已报销/报销中/未报销 各多少张, 总额)
+- **项目详情**: 点项目进入, 上方是 PDF 列表, 下方是可编辑表格 (点单元格直接改备注/淘宝单号/金额等), 右上角状态下拉切换报销状态
+- **数据库**: `%APPDATA%\rename-invoice\accounts.db` (SQLite, 单文件备份)
+
+仍支持原有的 CLI 用法; GUI 是可选的.
 
 ## 致谢
 
