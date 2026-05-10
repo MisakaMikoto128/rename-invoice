@@ -2,6 +2,7 @@
 import flet as ft
 
 from accounting import db
+from accounting.ui.main_view import build_main_view
 from accounting.ui.state import AppState
 
 
@@ -10,16 +11,24 @@ def main(page: ft.Page):
     page.window.width = 1200
     page.window.height = 720
     page.theme_mode = ft.ThemeMode.LIGHT
+    page.padding = 0
 
     state = AppState(db_path=str(db.default_db_path()))
     state.init()
     page.on_close = lambda _e: state.close()
 
-    # MainView injected in Task 6.
-    page.add(ft.Text(
-        f"AppState ready. {len(state.projects)} project(s) in DB.",
-        size=18,
-    ))
+    container = ft.Container(expand=True)
+
+    def render():
+        container.content = build_main_view(
+            page, state,
+            on_open_project=lambda pid: print(f"TODO Task 7: open project {pid}"),
+            on_new_project=lambda: print("TODO Task 13: new project dialog"),
+        )
+        page.update()
+
+    page.add(container)
+    render()
 
 
 if __name__ == "__main__":
