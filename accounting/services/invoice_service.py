@@ -1,4 +1,5 @@
 """Invoice CRUD."""
+import shutil
 import sqlite3
 from pathlib import Path
 from typing import List, Optional
@@ -133,10 +134,45 @@ def stats_by_project_status(conn: sqlite3.Connection) -> dict:
     return out
 
 
+def update_invoice_fields(conn: sqlite3.Connection, invoice_id: int,
+                          **changes) -> None:
+    """批量更新可编辑字段; 校验所有 column 在 EDITABLE_COLUMNS 内."""
+    if not changes:
+        return
+    for col in changes:
+        if col not in EDITABLE_COLUMNS:
+            raise ValueError(f"Column not editable: {col!r}")
+    sets = ", ".join(f"{col} = ?" for col in changes) + ", updated_at = CURRENT_TIMESTAMP"
+    args = tuple(changes.values()) + (invoice_id,)
+    conn.execute(f"UPDATE invoice SET {sets} WHERE id = ?", args)
+    conn.commit()
+
+
 def import_pdf(conn: sqlite3.Connection, project_id: int,
-               pdf_path: Path) -> Invoice:
-    """读 PDF -> 提字段 -> INSERT invoice 行. amount 为 None 时仍会插入."""
-    meta = extractor.extract(Path(pdf_path))
+               pdf_path: Path,
+               copy_to: Optional[Path] = None) -> Invoice:
+    """读 PDF -> 提字段 -> 可选复制到 project 目录 -> INSERT invoice 行."""
+    src = Path(pdf_path)
+    meta = extractor.extract(src)
+
+    if copy_to is not None:
+        dest_dir = Path(copy_to)
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        target = dest_dir / src.name
+        if target.exists():
+            stem, suffix = src.stem, src.suffix
+            n = 2
+            while True:
+                candidate = dest_dir / f"{stem} ({n}){suffix}"
+                if not candidate.exists():
+                    target = candidate
+                    break
+                n += 1
+        shutil.copy2(src, target)
+        file_name = target.name
+    else:
+        file_name = src.name
+
     amt: Optional[float] = None
     if meta.get("amount"):
         try:
@@ -144,9 +180,7 @@ def import_pdf(conn: sqlite3.Connection, project_id: int,
         except (TypeError, ValueError):
             amt = None
     return create_invoice(
-        conn,
-        project_id=project_id,
-        file_name=Path(pdf_path).name,
+        conn, project_id=project_id, file_name=file_name,
         invoice_no=meta.get("invoice_no"),
         invoice_date=meta.get("date"),
         invoice_date_iso=meta.get("invoice_date_iso"),
