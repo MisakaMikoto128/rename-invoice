@@ -4,6 +4,25 @@
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-05-10
+
+### Added — 第一个面向终端用户的发布
+
+- **Windows 单 exe 发布**：`AccountManager.exe`（约 106 MB），下载即用，**不需要装 Python**
+- 数据库 / 设置 / 项目文件夹仍在 `%APPDATA%\rename-invoice\`，与从源码运行的版本兼容（可平滑切换）
+- README 加“下载与使用”段（面向终端用户）
+- `BUILD.md` 文档化打包流程
+
+### Changed
+
+- `accounting/extractor.py` 适配 PyInstaller 打包环境：frozen 模式下从 `sys._MEIPASS` 寻找 `rename_invoice.py`；dev 模式继续走原 sys.path 逻辑
+- `.gitignore` 加 `*.spec`（PyInstaller 生成）
+
+### Notes
+
+- 这个版本固化了之前 0.5.x 累积的所有功能为面向终端用户的 v1
+- CLI 工具（`rename_invoice.py` + 右键菜单）路径完全没动，与桌面 GUI 共存
+
 ## [0.5.3] - 2026-05-10
 
 ### Added (account-manager GUI)
