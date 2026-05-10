@@ -17,6 +17,6 @@ def status_chip(status: str) -> ft.Container:
     return ft.Container(
         content=ft.Text(status, color="white", size=12, weight=ft.FontWeight.W_500),
         bgcolor=status_color(status),
-        padding=ft.padding.symmetric(horizontal=8, vertical=2),
+        padding=ft.Padding.symmetric(horizontal=8, vertical=2),
         border_radius=10,
     )
