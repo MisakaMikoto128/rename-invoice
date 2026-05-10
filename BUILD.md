@@ -51,7 +51,23 @@ flet pack accounting/ui/app.py `
   "--pyinstaller-build-args=--exclude-module=notebook" `
   "--pyinstaller-build-args=--exclude-module=jupyter" `
   "--pyinstaller-build-args=--exclude-module=sphinx" `
-  "--pyinstaller-build-args=--exclude-module=pytest"
+  "--pyinstaller-build-args=--exclude-module=pytest" `
+  "--pyinstaller-build-args=--exclude-module=pip" `
+  "--pyinstaller-build-args=--exclude-module=distutils" `
+  "--pyinstaller-build-args=--exclude-module=tkinter" `
+  "--pyinstaller-build-args=--exclude-module=numpy" `
+  "--pyinstaller-build-args=--exclude-module=lxml" `
+  "--pyinstaller-build-args=--exclude-module=cryptography" `
+  "--pyinstaller-build-args=--exclude-module=pygments" `
+  "--pyinstaller-build-args=--exclude-module=_pytest" `
+  "--pyinstaller-build-args=--exclude-module=ipywidgets" `
+  "--pyinstaller-build-args=--exclude-module=ipykernel" `
+  "--pyinstaller-build-args=--exclude-module=jupyter_client" `
+  "--pyinstaller-build-args=--exclude-module=zmq" `
+  "--pyinstaller-build-args=--exclude-module=debugpy" `
+  "--pyinstaller-build-args=--exclude-module=tornado" `
+  "--pyinstaller-build-args=--exclude-module=dill" `
+  "--pyinstaller-build-args=--exclude-module=fontTools"
 ```
 
 Notes on the flags:
@@ -70,16 +86,16 @@ Notes on the flags:
   `--pyinstaller-build-args=...` form (single token, `=`, quoted) is required
   because argparse with `nargs='*'` will reject following `--`-prefixed
   tokens; one repeated `--pyinstaller-build-args=...` per exclude works.
-- The 13 `--exclude-module` flags strip dev-only packages (matplotlib, PyQt,
-  scipy, pandas, jupyter stack, etc.) that PyInstaller pulls in transitively
-  from the dev environment. None of these are runtime deps — see
-  `requirements.txt`. **Do not** exclude `numpy` or `lxml` blindly: openpyxl /
-  pymupdf reach for them in some code paths.
+- The first 13 excludes (matplotlib … pytest) strip the obvious heavy
+  dev-only packages PyInstaller pulls in transitively from the dev
+  site-packages. The next 14 (pip … fontTools) are v1.0.1 additions — see
+  the `Excludes that were tried and reverted` table below for which we
+  attempted but kept off.
 
 ## Output
 
 ```
-dist/AccountManager.exe   (~ 106 MB, single-file)
+dist/AccountManager.exe   (~ 75 MB, single-file)
 build/AccountManager/...  (PyInstaller intermediates — gitignored)
 AccountManager.spec       (PyInstaller spec — gitignored)
 ```
@@ -87,24 +103,38 @@ AccountManager.spec       (PyInstaller spec — gitignored)
 Both `build/`, `dist/`, and `*.spec` are listed in `.gitignore`. **Do not
 commit the binary** — it ships via GitHub Releases.
 
-Without the `--exclude-module` flags the exe was ~237 MB, dominated by
-transitive deps PyInstaller picks up from the dev site-packages (matplotlib,
-PyQt5, scipy, pandas, jupyter, …). With the excludes above the exe drops to
-~106 MB and still passes the 12-second smoke test below.
+Without any `--exclude-module` flags the exe was ~237 MB. v1.0.0's 13 excludes
+took it to ~106 MB. v1.0.1 added 14 more excludes (numpy, lxml, cryptography,
+pygments, jupyter/zmq/debugpy/tornado, fontTools, …) bringing the final size
+to ~75 MB. The bundle still passes the 15-second smoke test below.
+
+## Excludes that were tried and reverted
+
+| Module | Why we can't exclude it |
+|---|---|
+| `setuptools` | PyInstaller's `pyi_rth_pkgres` runtime hook imports `pkg_resources` at startup; without setuptools (which provides `pkg_resources`) the exe crashes with `ModuleNotFoundError: No module named 'jaraco.text'` immediately on launch. |
+| `wheel` | PyInstaller's setuptools pre-import hook calls `add_alias_module('wheel', ...)`; passing `--exclude-module=wheel` makes the build itself fail with `ValueError: Target module "wheel" already imported as "ExcludedModule"`. |
 
 ## Smoke test
 
 ```powershell
 $p = Start-Process -FilePath ".\dist\AccountManager.exe" -PassThru
-Start-Sleep -Seconds 12
+Start-Sleep -Seconds 15
 $alive = !$p.HasExited
 if ($alive) { Stop-Process -Id $p.Id -Force }
-Write-Host "Exe alive after 12s: $alive"
+Write-Host "Exe alive after 15s: $alive"
 ```
 
 A onefile PyInstaller exe needs ~5-8 s to unpack into `%TEMP%\_MEIxxxxx`, then
-Flet spins up the Flutter view. If `$alive` is `True` after 12 s, the bundle
+Flet spins up the Flutter view. If `$alive` is `True` after 15 s, the bundle
 loaded cleanly.
+
+**Caveat for the smoke test.** Do **not** pass `-RedirectStandardOutput` /
+`-RedirectStandardError` to `Start-Process` here. PyInstaller built the bundle
+with `--noconsole`, so the parent process re-execs into a windowed Flet child
+and the redirected-stdio parent exits within seconds — making `$alive` look
+`False` even though the GUI is running fine. Without redirection, the parent
+stays alive for the lifetime of the GUI.
 
 ## Caveats
 
@@ -115,10 +145,12 @@ loaded cleanly.
   cold start. If we care, switch to `flet pack -D ...` (one-folder mode) — the
   user gets a folder with `AccountManager.exe` inside, which starts in <1 s
   but distributes as a zip rather than a single file.
-- **Excluded heavy deps.** The 13 `--exclude-module` flags above already
-  trim the exe from 237 MB to ~106 MB. Pushing further (excluding `numpy`,
-  `lxml`, `cryptography`, `tkinter`) is risky — at least one of openpyxl /
-  pymupdf / Flet's runtime imports them. Test before adding more.
+- **Excluded heavy deps.** The 27 `--exclude-module` flags above trim the exe
+  from 237 MB to ~75 MB. v1.0.1 confirmed `numpy`, `lxml`, `cryptography`,
+  `tkinter` are all safe to exclude for our usage (offline desktop GUI, no
+  TLS, plain xlsx with text + numbers + SUM formulae). If we ever start
+  generating xlsx with charts, embedded images, or pivot tables, re-test
+  `numpy` / `lxml` excludes — openpyxl's optional code paths reach for them.
 - **Dev path unchanged.** `python -m accounting.ui.app` still works for
   development; the frozen-vs-source path branch in `accounting/extractor.py`
   picks the right `_REPO_ROOT` automatically.
