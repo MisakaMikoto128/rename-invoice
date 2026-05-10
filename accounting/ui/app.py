@@ -9,6 +9,7 @@ from accounting.ui.state import AppState
 
 def main(page: ft.Page):
     page.title = "rename-invoice / 账目管理"
+    # Defaults — overridden below if user has saved window state.
     page.window.width = 1200
     page.window.height = 720
     saved_theme = settings.get(settings.KEY_THEME_MODE, "light")
@@ -16,15 +17,62 @@ def main(page: ft.Page):
                        else ft.ThemeMode.LIGHT)
     page.padding = 0
 
+    # Restore window size + position from saved settings (best-effort).
+    try:
+        w = settings.get(settings.KEY_WINDOW_WIDTH)
+        h = settings.get(settings.KEY_WINDOW_HEIGHT)
+        left = settings.get(settings.KEY_WINDOW_LEFT)
+        top = settings.get(settings.KEY_WINDOW_TOP)
+        maxi = settings.get(settings.KEY_WINDOW_MAXIMIZED)
+        if w:
+            page.window.width = float(w)
+        if h:
+            page.window.height = float(h)
+        if left is not None:
+            page.window.left = float(left)
+        if top is not None:
+            page.window.top = float(top)
+        if maxi == "1":
+            page.window.maximized = True
+    except Exception:
+        pass  # corrupt settings — fall back to defaults
+
     state = AppState(db_path=str(db.default_db_path()))
     state.init()
-    page.on_close = lambda _e: state.close()
+
+    def save_window_state():
+        try:
+            if page.window.width:
+                settings.set_value(settings.KEY_WINDOW_WIDTH,
+                                   str(page.window.width))
+            if page.window.height:
+                settings.set_value(settings.KEY_WINDOW_HEIGHT,
+                                   str(page.window.height))
+            if page.window.left is not None:
+                settings.set_value(settings.KEY_WINDOW_LEFT,
+                                   str(page.window.left))
+            if page.window.top is not None:
+                settings.set_value(settings.KEY_WINDOW_TOP,
+                                   str(page.window.top))
+            settings.set_value(
+                settings.KEY_WINDOW_MAXIMIZED,
+                "1" if page.window.maximized else "0",
+            )
+        except Exception:
+            pass
+
+    def on_close(_e):
+        save_window_state()
+        state.close()
+
+    page.on_close = on_close
 
     container = ft.Container(expand=True)
 
     def render_main():
         state.select_project(None)
         state.search_query = ""
+        state.status_filter = None
 
         from accounting.services import project_service as ps_local
         from accounting.ui.dialogs import (

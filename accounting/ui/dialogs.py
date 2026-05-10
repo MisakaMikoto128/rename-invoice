@@ -109,6 +109,60 @@ def show_settings_dialog(page: ft.Page, current_root: str, project_count: int,
     page.show_dialog(dialog)
 
 
+def show_add_invoice_dialog(page: ft.Page,
+                             on_confirm: Callable[[dict], None]) -> None:
+    """User fills in invoice fields manually; on_confirm receives a dict.
+
+    Keys in payload: invoice_no, invoice_date (chinese-format string),
+    seller, amount (float|None), remark, taobao_order. All values may be None.
+    """
+    invoice_no = ft.TextField(label="发票号码", autofocus=True)
+    date_field = ft.TextField(label="开票日期",
+                              hint_text="例: 2026年5月10日 (空白也行)")
+    seller = ft.TextField(label="销售方名称")
+    amount = ft.TextField(label="金额 (¥)", hint_text="例: 16.60")
+    remark = ft.TextField(label="备注名称 (可选)")
+    taobao = ft.TextField(label="淘宝单号 (可选)")
+    error_text = ft.Text("", color=ft.Colors.RED, size=12)
+
+    def on_ok(_e):
+        amt_value = None
+        if amount.value and amount.value.strip():
+            try:
+                amt_value = float(amount.value.strip())
+            except ValueError:
+                error_text.value = "金额必须是数字"
+                page.update()
+                return
+        payload = {
+            "invoice_no": (invoice_no.value or "").strip() or None,
+            "invoice_date": (date_field.value or "").strip() or None,
+            "seller": (seller.value or "").strip() or None,
+            "amount": amt_value,
+            "remark": (remark.value or "").strip() or None,
+            "taobao_order": (taobao.value or "").strip() or None,
+        }
+        try:
+            on_confirm(payload)
+            page.pop_dialog()
+        except Exception as ex:
+            error_text.value = f"添加失败: {ex}"
+            page.update()
+
+    dialog = ft.AlertDialog(
+        title=ft.Text("手动添加发票"),
+        content=ft.Column([
+            invoice_no, date_field, seller, amount, remark, taobao,
+            error_text,
+        ], tight=True, height=420, width=420, scroll=ft.ScrollMode.AUTO),
+        actions=[
+            ft.TextButton("取消", on_click=lambda _e: page.pop_dialog()),
+            ft.ElevatedButton("添加", on_click=on_ok),
+        ],
+    )
+    page.show_dialog(dialog)
+
+
 def show_new_project_dialog(page: ft.Page,
                              on_confirm: Callable[[str], None]) -> None:
     name_field = ft.TextField(label="项目名", autofocus=True)

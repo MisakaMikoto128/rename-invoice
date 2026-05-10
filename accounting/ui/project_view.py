@@ -65,11 +65,20 @@ def build_project_view(page: ft.Page, state: AppState,
 
     # Lift invoice fetch + total here so closures below can reference `invoices`
     # via late-binding (handlers fire after this returns, so `invoices` is bound).
+    # We also fetch all_invoices independent of search/status filters so the
+    # chip counts stay stable as filters change.
+    all_invoices = ivs.list_invoices(state.conn, p.id)
+    status_counts = {None: len(all_invoices)}  # None key = 全部
+    for s in VALID_STATUS:
+        status_counts[s] = sum(1 for inv in all_invoices if inv.status == s)
+
     if state.search_query:
         invoices = ivs.search_invoices(state.conn, state.search_query,
                                        project_id=p.id)
     else:
-        invoices = ivs.list_invoices(state.conn, p.id)
+        invoices = list(all_invoices)
+    if state.status_filter is not None:
+        invoices = [inv for inv in invoices if inv.status == state.status_filter]
     total = sum(inv.amount or 0 for inv in invoices)
 
     def _total_prefix():
@@ -115,6 +124,79 @@ def build_project_view(page: ft.Page, state: AppState,
         msg = "，".join(parts)
         if failed:
             msg += " — " + "; ".join(f"{n}: {e}" for n, e in failed)
+        page.show_dialog(ft.SnackBar(content=ft.Text(msg)))
+        on_changed()
+
+    def on_add_manual_click(_e):
+        from accounting.ui.dialogs import show_add_invoice_dialog
+        from accounting.extractor import chinese_date_to_iso
+        import time
+
+        def confirm(payload):
+            ts = int(time.time())
+            marker = (payload.get("invoice_no") or
+                      payload.get("seller") or "entry")[:30]
+            file_name = f"[手动] {marker} {ts}"
+            ivs.create_invoice(
+                state.conn, project_id=p.id,
+                file_name=file_name,
+                invoice_no=payload.get("invoice_no"),
+                invoice_date=payload.get("invoice_date"),
+                invoice_date_iso=chinese_date_to_iso(payload.get("invoice_date")),
+                seller=payload.get("seller"),
+                amount=payload.get("amount"),
+                remark=payload.get("remark"),
+                taobao_order=payload.get("taobao_order"),
+            )
+            on_changed()
+            page.show_dialog(ft.SnackBar(
+                content=ft.Text(f"已添加: {marker}")))
+
+        show_add_invoice_dialog(page, confirm)
+
+    async def on_import_folder_click(_e):
+        from pathlib import Path as _Path
+        initial = settings.get(settings.KEY_LAST_IMPORT_DIR)
+        folder = await file_picker.get_directory_path(
+            dialog_title="选择 PDF 文件夹",
+            initial_directory=initial,
+        )
+        if not folder:
+            return
+        folder_path = _Path(folder)
+        pdfs = sorted(folder_path.glob("*.pdf"))
+        if not pdfs:
+            page.show_dialog(ft.SnackBar(
+                content=ft.Text(f"文件夹里没有 PDF: {folder}")))
+            return
+
+        settings.set_value(settings.KEY_LAST_IMPORT_DIR, str(folder_path))
+
+        project_dir = _Path(p.folder_path)
+        imported = 0
+        duplicates = 0
+        failed: list[tuple[str, str]] = []
+        for pdf_path in pdfs:
+            try:
+                result = ivs.import_pdf(state.conn, p.id, pdf_path,
+                                        copy_to=project_dir)
+                if result is None:
+                    duplicates += 1
+                else:
+                    imported += 1
+            except Exception as ex:
+                failed.append((pdf_path.name, str(ex)))
+
+        parts = [f"扫描 {len(pdfs)} 个 PDF", f"导入 {imported}"]
+        if duplicates:
+            parts.append(f"跳过 {duplicates} 重复")
+        if failed:
+            parts.append(f"{len(failed)} 失败")
+        msg = "，".join(parts)
+        if failed:
+            msg += " — " + "; ".join(f"{n}: {e}" for n, e in failed[:3])
+            if len(failed) > 3:
+                msg += f"; (还有 {len(failed) - 3} 个)"
         page.show_dialog(ft.SnackBar(content=ft.Text(msg)))
         on_changed()
 
@@ -248,6 +330,14 @@ def build_project_view(page: ft.Page, state: AppState,
         ft.Container(expand=True),
         ft.ElevatedButton("+ 导入 PDF", icon=ft.Icons.UPLOAD_FILE,
                           on_click=on_pick_click),
+        ft.OutlinedButton(
+            "导入文件夹", icon=ft.Icons.FOLDER_OPEN,
+            on_click=lambda _e: page.run_task(on_import_folder_click, _e),
+        ),
+        ft.OutlinedButton(
+            "手动添加", icon=ft.Icons.ADD,
+            on_click=on_add_manual_click,
+        ),
         ft.OutlinedButton("导出 xlsx", icon=ft.Icons.DOWNLOAD,
                           on_click=on_export_xlsx_click),
         ft.OutlinedButton("导出 zip", icon=ft.Icons.FOLDER_ZIP,
@@ -259,6 +349,31 @@ def build_project_view(page: ft.Page, state: AppState,
         hint_text="搜索发票号/销售方/备注/淘宝单号/文件名",
         prefix_icon=ft.Icons.SEARCH, dense=True, expand=True,
     )
+
+    def set_status_filter(new_filter):
+        state.status_filter = new_filter  # None for 全部
+        on_changed()
+
+    def make_chip(label, key, is_selected):
+        return ft.Container(
+            content=ft.Text(
+                f"{label} ({status_counts[key]})",
+                color="white" if is_selected else None,
+                size=12, weight=ft.FontWeight.W_500,
+            ),
+            bgcolor=(ft.Colors.BLUE_400 if is_selected
+                     else ft.Colors.SURFACE_CONTAINER_HIGH),
+            padding=ft.Padding.symmetric(horizontal=12, vertical=6),
+            border_radius=14,
+            on_click=lambda _e, k=key: set_status_filter(k),
+        )
+
+    chip_row = ft.Row([
+        make_chip("全部", None, state.status_filter is None),
+        make_chip("未报销", "未报销", state.status_filter == "未报销"),
+        make_chip("报销中", "报销中", state.status_filter == "报销中"),
+        make_chip("已报销", "已报销", state.status_filter == "已报销"),
+    ], spacing=8)
 
     def make_status_dd(invoice_id, current):
         # Flet 0.85 Dropdown uses `on_select`, and it must be wired via the
@@ -309,10 +424,15 @@ def build_project_view(page: ft.Page, state: AppState,
             on_confirm=do_delete,
         )
 
+    def needs_attention(inv):
+        # Highlight when 备注 OR 淘宝单号 is missing/blank.
+        return (not (inv.remark and inv.remark.strip()) or
+                not (inv.taobao_order and inv.taobao_order.strip()))
+
     def build_rows(invoices_list):
         rows = []
         for inv in invoices_list:
-            rows.append(ft.DataRow(cells=[
+            cells = [
                 ft.DataCell(ft.Text(inv.file_name, no_wrap=True,
                                     overflow=ft.TextOverflow.ELLIPSIS,
                                     tooltip=inv.file_name)),
@@ -330,7 +450,9 @@ def build_project_view(page: ft.Page, state: AppState,
                     on_click=lambda _e, iid=inv.id, fname=inv.file_name:
                         confirm_delete_invoice(iid, fname),
                 )),
-            ]))
+            ]
+            row_color = "#FFF8E1" if needs_attention(inv) else None  # light amber
+            rows.append(ft.DataRow(cells=cells, color=row_color))
         return rows
 
     table = ft.DataTable(
@@ -355,6 +477,10 @@ def build_project_view(page: ft.Page, state: AppState,
                              weight=ft.FontWeight.W_500)
 
     def open_pdf(invoice):
+        if invoice.file_name.startswith("[手动]"):
+            page.show_dialog(ft.SnackBar(
+                content=ft.Text("手动添加的条目没有 PDF 文件")))
+            return
         pdf_path = Path(p.folder_path) / invoice.file_name
         if not pdf_path.exists():
             page.show_dialog(ft.SnackBar(
@@ -367,6 +493,10 @@ def build_project_view(page: ft.Page, state: AppState,
                 content=ft.Text(f"打开失败: {ex}")))
 
     async def save_as(invoice):
+        if invoice.file_name.startswith("[手动]"):
+            page.show_dialog(ft.SnackBar(
+                content=ft.Text("手动添加的条目没有 PDF 文件")))
+            return
         src = Path(p.folder_path) / invoice.file_name
         if not src.exists():
             page.show_dialog(ft.SnackBar(
@@ -454,6 +584,9 @@ def build_project_view(page: ft.Page, state: AppState,
                                                project_id=p.id)
         else:
             new_invoices = ivs.list_invoices(state.conn, p.id)
+        if state.status_filter is not None:
+            new_invoices = [inv for inv in new_invoices
+                            if inv.status == state.status_filter]
         invoices = new_invoices  # rebind so export handlers + _total_prefix see filtered list
         table.rows = build_rows(new_invoices)
         new_total = sum(inv.amount or 0 for inv in new_invoices)
@@ -490,6 +623,8 @@ def build_project_view(page: ft.Page, state: AppState,
     return ft.Column([
         header,
         ft.Container(content=search_field, padding=10),
+        ft.Container(content=chip_row,
+                     padding=ft.Padding.symmetric(horizontal=10, vertical=4)),
         ft.Divider(height=1),
         ft.Row([pdf_list_pane, ft.VerticalDivider(width=1), table_pane],
                expand=True),
