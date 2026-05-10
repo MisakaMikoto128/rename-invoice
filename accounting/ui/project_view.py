@@ -1,10 +1,12 @@
 """Project detail view: header (back/import/export/status) + two-pane (PDF list / table)."""
+import os
 import tempfile
 import zipfile
 from pathlib import Path
 from typing import Callable
 import flet as ft
 
+from accounting import settings
 from accounting.models import VALID_STATUS
 from accounting.services import project_service as ps
 from accounting.services import invoice_service as ivs
@@ -60,15 +62,34 @@ def build_project_view(page: ft.Page, state: AppState,
     page.services.append(file_picker)
     page.update()
 
+    # Lift invoice fetch + total here so closures below can reference `invoices`
+    # via late-binding (handlers fire after this returns, so `invoices` is bound).
+    if state.search_query:
+        invoices = ivs.search_invoices(state.conn, state.search_query,
+                                       project_id=p.id)
+    else:
+        invoices = ivs.list_invoices(state.conn, p.id)
+    total = sum(inv.amount or 0 for inv in invoices)
+
+    def _total_prefix():
+        # Recompute lazily from current `invoices` list — `apply_filter` may
+        # rebind `invoices` when search query changes. Empty list → no prefix.
+        t = sum(inv.amount or 0 for inv in invoices)
+        return f"{t:.2f}元-" if invoices else ""
+
     async def on_pick_click(_e):
         from pathlib import Path as _Path
         files = await file_picker.pick_files(
             file_type=ft.FilePickerFileType.CUSTOM,
             allowed_extensions=["pdf"],
             allow_multiple=True,
+            initial_directory=settings.get(settings.KEY_LAST_IMPORT_DIR),
         )
         if not files:
             return
+        if files[0].path:
+            settings.set_value(settings.KEY_LAST_IMPORT_DIR,
+                               os.path.dirname(files[0].path))
         project_dir = _Path(p.folder_path)
         imported = 0
         duplicates = 0
@@ -100,12 +121,15 @@ def build_project_view(page: ft.Page, state: AppState,
         from pathlib import Path as _Path
         save_path = await file_picker.save_file(
             dialog_title="导出 xlsx",
-            file_name=f"{p.name}_发票汇总.xlsx",
+            file_name=f"{_total_prefix()}{p.name}_发票汇总.xlsx",
             allowed_extensions=["xlsx"],
             file_type=ft.FilePickerFileType.CUSTOM,
+            initial_directory=settings.get(settings.KEY_LAST_EXPORT_XLSX_DIR),
         )
         if not save_path:
             return
+        settings.set_value(settings.KEY_LAST_EXPORT_XLSX_DIR,
+                           os.path.dirname(save_path))
         try:
             from rename_invoice import write_summary_xlsx
             rows = [
@@ -126,14 +150,27 @@ def build_project_view(page: ft.Page, state: AppState,
                 content=ft.Text(f"导出失败: {ex}")))
 
     def on_export_zip_click(_e):
-        # Step 1: small modal asking for filename + checkbox.
+        # Step 1: small modal asking for filename + checkboxes.
         # The actual save_file + zip-build runs inside on_ok (async),
         # because page.show_dialog does not block.
-        name_input = ft.TextField(label="zip 文件名", value=f"{p.name}.zip",
-                                  autofocus=True)
+        name_input = ft.TextField(
+            label="zip 文件名",
+            value=f"{_total_prefix()}{p.name}.zip",
+            autofocus=True,
+        )
+        include_prefix = ft.Checkbox(label="附带总价格前缀", value=True)
         include_xlsx = ft.Checkbox(label="同时附带 Excel 汇总 (xlsx)",
                                    value=False)
         error_text = ft.Text("", color=ft.Colors.RED, size=12)
+
+        def regen_name(_e3):
+            if include_prefix.value:
+                name_input.value = f"{_total_prefix()}{p.name}.zip"
+            else:
+                name_input.value = f"{p.name}.zip"
+            name_input.update()
+
+        include_prefix.on_change = regen_name
 
         async def on_ok(_e2):
             if not (name_input.value or "").strip():
@@ -148,9 +185,12 @@ def build_project_view(page: ft.Page, state: AppState,
                 file_name=zip_name,
                 allowed_extensions=["zip"],
                 file_type=ft.FilePickerFileType.CUSTOM,
+                initial_directory=settings.get(settings.KEY_LAST_EXPORT_ZIP_DIR),
             )
             if not save_path:
                 return
+            settings.set_value(settings.KEY_LAST_EXPORT_ZIP_DIR,
+                               os.path.dirname(save_path))
             try:
                 _build_zip(save_path, invoices, Path(p.folder_path),
                            include_xlsx=want_xlsx)
@@ -162,8 +202,9 @@ def build_project_view(page: ft.Page, state: AppState,
 
         dialog = ft.AlertDialog(
             title=ft.Text("导出 zip"),
-            content=ft.Column([name_input, include_xlsx, error_text],
-                              tight=True, height=160, width=400),
+            content=ft.Column(
+                [name_input, include_prefix, include_xlsx, error_text],
+                tight=True, height=200, width=400),
             actions=[
                 ft.TextButton("取消", on_click=lambda _e2: page.pop_dialog()),
                 ft.ElevatedButton("确认", on_click=on_ok),
@@ -199,12 +240,6 @@ def build_project_view(page: ft.Page, state: AppState,
         ft.OutlinedButton("导出 zip", icon=ft.Icons.FOLDER_ZIP,
                           on_click=on_export_zip_click),
     ])
-
-    if state.search_query:
-        invoices = ivs.search_invoices(state.conn, state.search_query,
-                                       project_id=p.id)
-    else:
-        invoices = ivs.list_invoices(state.conn, p.id)
 
     search_field = ft.TextField(
         value=state.search_query,
@@ -279,7 +314,6 @@ def build_project_view(page: ft.Page, state: AppState,
         column_spacing=10,
     )
 
-    total = sum(inv.amount or 0 for inv in invoices)
     total_text = ft.Text(f"合计 (本项目): {format_amount(total)}",
                          weight=ft.FontWeight.BOLD, size=14)
     pdf_count_text = ft.Text(f"PDF ({len(invoices)})", size=14,
@@ -328,6 +362,7 @@ def build_project_view(page: ft.Page, state: AppState,
     )
 
     def apply_filter(_e=None):
+        nonlocal invoices
         query = (search_field.value or "").strip()
         state.search_query = query
         if query:
@@ -335,6 +370,7 @@ def build_project_view(page: ft.Page, state: AppState,
                                                project_id=p.id)
         else:
             new_invoices = ivs.list_invoices(state.conn, p.id)
+        invoices = new_invoices  # rebind so export handlers + _total_prefix see filtered list
         table.rows = build_rows(new_invoices)
         new_total = sum(inv.amount or 0 for inv in new_invoices)
         total_text.value = f"合计 (本项目): {format_amount(new_total)}"
