@@ -1,4 +1,5 @@
 """Modal dialogs for project create / rename / generic delete confirmation."""
+import os
 from typing import Callable
 import flet as ft
 
@@ -194,3 +195,28 @@ def show_new_project_dialog(page: ft.Page,
         ],
     )
     page.show_dialog(dialog)
+
+
+def show_export_success_snackbar(page: ft.Page, message: str,
+                                  file_path: str,
+                                  duration_ms: int = 8000) -> None:
+    """SnackBar with '打开文件夹' action that opens File Explorer at parent dir.
+
+    duration_ms: how long to show. Flet default is ~4s; we use 8s so the user
+    has time to click the action button before it auto-dismisses.
+    """
+    folder = os.path.dirname(file_path) or file_path
+
+    def open_folder(_e):
+        try:
+            os.startfile(folder)
+        except Exception:
+            pass
+
+    snack = ft.SnackBar(
+        content=ft.Text(message),
+        action="打开文件夹",
+        on_action=open_folder,
+        duration=duration_ms,
+    )
+    page.show_dialog(snack)

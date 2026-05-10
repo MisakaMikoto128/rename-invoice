@@ -11,6 +11,7 @@ from accounting import settings
 from accounting.models import VALID_STATUS
 from accounting.services import project_service as ps
 from accounting.services import invoice_service as ivs
+from accounting.ui.dialogs import show_export_success_snackbar
 from accounting.ui.state import AppState
 from accounting.ui.widgets.status_chip import status_chip
 from accounting.ui.widgets.editable_cell import EditableTextCell
@@ -226,8 +227,8 @@ def build_project_view(page: ft.Page, state: AppState,
                 for inv in invoices
             ]
             write_summary_xlsx(rows, _Path(save_path))
-            page.show_dialog(ft.SnackBar(
-                content=ft.Text(f"已导出 xlsx: {save_path}")))
+            show_export_success_snackbar(
+                page, f"已导出 xlsx: {save_path}", save_path)
         except Exception as ex:
             page.show_dialog(ft.SnackBar(
                 content=ft.Text(f"导出失败: {ex}")))
@@ -277,8 +278,8 @@ def build_project_view(page: ft.Page, state: AppState,
             try:
                 _build_zip(save_path, invoices, Path(p.folder_path),
                            include_xlsx=want_xlsx)
-                page.show_dialog(ft.SnackBar(
-                    content=ft.Text(f"已导出 zip: {save_path}")))
+                show_export_success_snackbar(
+                    page, f"已导出 zip: {save_path}", save_path)
             except Exception as ex:
                 page.show_dialog(ft.SnackBar(
                     content=ft.Text(f"导出失败: {ex}")))
@@ -516,8 +517,8 @@ def build_project_view(page: ft.Page, state: AppState,
             shutil.copy2(str(src), save_path)
             settings.set_value(settings.KEY_LAST_SAVE_AS_DIR,
                                os.path.dirname(save_path))
-            page.show_dialog(ft.SnackBar(
-                content=ft.Text(f"已另存到 {save_path}")))
+            show_export_success_snackbar(
+                page, f"已另存到 {save_path}", save_path)
         except Exception as ex:
             page.show_dialog(ft.SnackBar(
                 content=ft.Text(f"保存失败: {ex}")))
