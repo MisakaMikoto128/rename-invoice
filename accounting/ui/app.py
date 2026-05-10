@@ -23,10 +23,21 @@ def main(page: ft.Page):
     def render_main():
         state.select_project(None)
         state.search_query = ""
+
+        from accounting.services import project_service as ps_local
+        from accounting.ui.dialogs import show_new_project_dialog
+
+        def new_project():
+            def confirm(name, folder):
+                ps_local.create_project(state.conn, name=name, folder_path=folder)
+                state.refresh_projects()
+                render_main()
+            show_new_project_dialog(page, confirm)
+
         container.content = build_main_view(
             page, state,
             on_open_project=lambda pid: render_project(pid),
-            on_new_project=lambda: print("TODO Task 13"),
+            on_new_project=new_project,
         )
         page.update()
 
