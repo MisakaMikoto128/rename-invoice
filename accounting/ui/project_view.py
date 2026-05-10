@@ -18,6 +18,32 @@ def build_project_view(page: ft.Page, state: AppState,
     if p is None:
         return ft.Text("(no project selected)")
 
+    file_picker = ft.FilePicker()
+    page.services.append(file_picker)
+    page.update()
+
+    async def on_pick_click(_e):
+        from pathlib import Path as _Path
+        files = await file_picker.pick_files(
+            file_type=ft.FilePickerFileType.CUSTOM,
+            allowed_extensions=["pdf"],
+            allow_multiple=True,
+        )
+        if not files:
+            return
+        project_dir = _Path(p.folder_path)
+        for f in files:
+            if not f.path:
+                continue
+            try:
+                ivs.import_pdf(state.conn, p.id, _Path(f.path),
+                               copy_to=project_dir)
+            except Exception as ex:
+                page.show_dialog(ft.SnackBar(
+                    content=ft.Text(f"导入失败: {f.name} — {ex}")))
+                page.update()
+        on_changed()
+
     status_dd = ft.Dropdown(
         value=p.status,
         options=[ft.dropdown.Option(s) for s in VALID_STATUS],
@@ -37,7 +63,7 @@ def build_project_view(page: ft.Page, state: AppState,
         status_dd,
         ft.Container(expand=True),
         ft.ElevatedButton("+ 导入 PDF", icon=ft.Icons.UPLOAD_FILE,
-                          on_click=lambda _e: print("TODO Task 11")),
+                          on_click=on_pick_click),
         ft.OutlinedButton("导出 xlsx", icon=ft.Icons.DOWNLOAD,
                           on_click=lambda _e: print("TODO M3")),
     ])
