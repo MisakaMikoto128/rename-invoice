@@ -405,10 +405,10 @@ def build_project_view(page: ft.Page, state: AppState,
                     icon=ft.Icons.SAVE_AS,
                     icon_size=18,
                     tooltip="另存为",
-                    # page.run_task in Flet 0.85 takes a coroutine without
-                    # extra args, so wrap save_as(inv) in a lambda.
+                    # run_task wants a coroutine function + args, not a sync
+                    # lambda that returns a coroutine.
                     on_click=lambda _e, _inv=inv:
-                        page.run_task(lambda: save_as(_inv)),
+                        page.run_task(save_as, _inv),
                 ),
                 dense=True,
                 on_click=lambda _e, inv=inv: open_pdf(inv),
