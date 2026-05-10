@@ -25,7 +25,11 @@ def main(page: ft.Page):
         state.search_query = ""
 
         from accounting.services import project_service as ps_local
-        from accounting.ui.dialogs import show_new_project_dialog, show_confirm_dialog
+        from accounting.ui.dialogs import (
+            show_new_project_dialog, show_confirm_dialog,
+            show_settings_dialog,
+        )
+        from accounting import storage as storage_mod
 
         def new_project():
             def confirm(name):
@@ -50,11 +54,45 @@ def main(page: ft.Page):
                 on_confirm=do_delete,
             )
 
+        async def _start_migrate():
+            from pathlib import Path as _Path
+            file_picker = ft.FilePicker()
+            page.services.append(file_picker)
+            page.update()
+            new_root = await file_picker.get_directory_path(
+                dialog_title="选择新的项目根目录")
+            if not new_root:
+                return
+            result = storage_mod.migrate_projects_root(
+                state.conn, _Path(new_root))
+            parts = [
+                f"已迁移 {len(result['moved'])} 个",
+                f"跳过 {len(result['skipped'])} 个",
+            ]
+            if result["errors"]:
+                parts.append(f"{len(result['errors'])} 个错误")
+            page.show_dialog(ft.SnackBar(
+                content=ft.Text("，".join(parts) + f" → {result['new_root']}")))
+            state.refresh_projects()
+            render_main()
+
+        def open_settings():
+            current = str(storage_mod.current_projects_dir())
+            count = len(state.projects)
+
+            def trigger_migrate():
+                page.run_task(_start_migrate)
+
+            show_settings_dialog(page, current_root=current,
+                                  project_count=count,
+                                  on_migrate=trigger_migrate)
+
         container.content = build_main_view(
             page, state,
             on_open_project=lambda pid: render_project(pid),
             on_new_project=new_project,
             on_delete_project=delete_project_action,
+            on_open_settings=open_settings,
         )
         page.update()
 

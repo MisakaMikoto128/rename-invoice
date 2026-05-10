@@ -11,14 +11,24 @@ from accounting.ui.widgets.status_chip import status_chip
 def build_main_view(page: ft.Page, state: AppState,
                     on_open_project: Callable[[int], None],
                     on_new_project: Callable[[], None],
-                    on_delete_project: Callable[[int], None]) -> ft.Control:
+                    on_delete_project: Callable[[int], None],
+                    on_open_settings: Callable[[], None]) -> ft.Control:
     sidebar = _build_sidebar(state, on_open_project, on_new_project,
                              on_delete_project)
     stats_card = _build_stats_card(state)
-    return ft.Row(
+    settings_btn = ft.IconButton(
+        icon=ft.Icons.SETTINGS, tooltip="设置",
+        on_click=lambda _e: on_open_settings(),
+    )
+    header = ft.Row([
+        ft.Container(expand=True),  # spacer
+        settings_btn,
+    ])
+    body = ft.Row(
         [sidebar, ft.VerticalDivider(width=1), stats_card],
         expand=True,
     )
+    return ft.Column([header, body], expand=True)
 
 
 def _build_sidebar(state: AppState, on_open_project, on_new_project,
