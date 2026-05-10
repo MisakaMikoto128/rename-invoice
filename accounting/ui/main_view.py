@@ -9,6 +9,7 @@ from typing import Callable
 import flet as ft
 
 from accounting.services import invoice_service as ivs
+from accounting.services import project_service as ps
 from accounting.ui.state import AppState
 from accounting.ui.widgets.amount_text import format_amount
 from accounting.ui.widgets.status_chip import status_chip
@@ -19,16 +20,25 @@ def build_main_view(page: ft.Page, state: AppState,
                     on_new_project: Callable[[], None],
                     on_delete_project: Callable[[int], None],
                     on_open_settings: Callable[[], None],
-                    on_open_invoice_in_project: Callable[[int, str], None]
+                    on_open_invoice_in_project: Callable[[int, str], None],
+                    on_open_trash: Callable[[], None]
                     ) -> ft.Control:
     """Build the main view.
 
     on_open_invoice_in_project(project_id, file_name) — navigate to the project
     AND set state.search_query to file_name (so the in-project table filters
     down to that one row).
+    on_open_trash() — navigate to the trash view.
     """
     sidebar = _build_sidebar(state, on_open_project, on_new_project,
                              on_delete_project)
+    trashed_count = len(ps.list_trashed_projects(state.conn))
+    trash_btn_label = f"回收站 ({trashed_count})" if trashed_count else "回收站"
+    trash_btn = ft.TextButton(
+        text=trash_btn_label,
+        icon=ft.Icons.DELETE_SWEEP,
+        on_click=lambda _e: on_open_trash(),
+    )
     settings_btn = ft.IconButton(
         icon=ft.Icons.SETTINGS, tooltip="设置",
         on_click=lambda _e: on_open_settings(),
@@ -64,6 +74,7 @@ def build_main_view(page: ft.Page, state: AppState,
             content=search_field, expand=True,
             padding=ft.Padding.symmetric(horizontal=10, vertical=8),
         ),
+        trash_btn,
         settings_btn,
     ])
     body = ft.Row(
