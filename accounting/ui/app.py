@@ -32,7 +32,13 @@ def main(page: ft.Page):
     def render_project(project_id):
         state.refresh_projects()
         state.select_project(project_id)
-        container.content = build_project_view(page, state, on_back=render_main)
+
+        def reload():
+            render_project(project_id)
+
+        container.content = build_project_view(
+            page, state, on_back=render_main, on_changed=reload,
+        )
         page.update()
 
     page.add(container)
