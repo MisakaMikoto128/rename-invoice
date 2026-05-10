@@ -4,6 +4,31 @@
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-05-10
+
+### Added (account-manager GUI)
+
+- **全局跨项目搜索**：主窗口顶部搜索框，输入即过滤，结果列表显示项目名 + 发票详情；点击结果直接跳进对应项目并预过滤到该行
+- **仓库根目录迁移**：⚙️ 设置对话框可把 `%APPDATA%\rename-invoice\projects` 整体移到任意位置（DB 仍在原位），DB 内每个项目的 folder_path 自动更新
+- **PDF 另存为**：项目内 PDF 列表每行 💾 图标，单击复制到任意位置（记住上次目录）
+- **黑暗模式切换**：设置对话框里的开关，写入 settings.json，启动时自动恢复
+- **项目回收站**（含 schema 迁移 v1→v2）：
+  - 主页 🗑 改为软删除（移到回收站），SnackBar 显示"[撤销]"按钮 5 秒可点
+  - 主页右上 "回收站 (N)" 入口
+  - 回收站页：列出所有已删除项目（带删除时间）+ "恢复" / "永久删除" 两按钮
+  - 永久删除才真删 DB（CASCADE 删发票），PDF 文件始终保留
+
+### Changed
+
+- `delete_project` 服务保持原语义（硬删，CASCADE）；新增 `trash_project` / `restore_project` / `list_trashed_projects`
+- `list_projects` / `get_project` 默认过滤 `deleted_at IS NULL`
+- DB schema 自动从 v1 ALTER 升到 v2（加 `deleted_at` 列），老 DB 无感升级
+
+### Fixed
+
+- Flet 0.85 `TextButton` 不接受 `text=` kwarg，改成位置参数
+- Flet 0.85 `page.run_task` 需要 coroutine function + args 分开传，不是返回 coroutine 的 sync lambda
+
 ## [0.5.1] - 2026-05-10
 
 ### Added (account-manager GUI 小补丁)
