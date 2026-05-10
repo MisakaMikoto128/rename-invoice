@@ -127,6 +127,33 @@ def build_project_view(page: ft.Page, state: AppState,
         page.show_dialog(ft.SnackBar(content=ft.Text(msg)))
         on_changed()
 
+    def on_add_manual_click(_e):
+        from accounting.ui.dialogs import show_add_invoice_dialog
+        from accounting.extractor import chinese_date_to_iso
+        import time
+
+        def confirm(payload):
+            ts = int(time.time())
+            marker = (payload.get("invoice_no") or
+                      payload.get("seller") or "entry")[:30]
+            file_name = f"[手动] {marker} {ts}"
+            ivs.create_invoice(
+                state.conn, project_id=p.id,
+                file_name=file_name,
+                invoice_no=payload.get("invoice_no"),
+                invoice_date=payload.get("invoice_date"),
+                invoice_date_iso=chinese_date_to_iso(payload.get("invoice_date")),
+                seller=payload.get("seller"),
+                amount=payload.get("amount"),
+                remark=payload.get("remark"),
+                taobao_order=payload.get("taobao_order"),
+            )
+            on_changed()
+            page.show_dialog(ft.SnackBar(
+                content=ft.Text(f"已添加: {marker}")))
+
+        show_add_invoice_dialog(page, confirm)
+
     async def on_import_folder_click(_e):
         from pathlib import Path as _Path
         initial = settings.get(settings.KEY_LAST_IMPORT_DIR)
@@ -307,6 +334,10 @@ def build_project_view(page: ft.Page, state: AppState,
             "导入文件夹", icon=ft.Icons.FOLDER_OPEN,
             on_click=lambda _e: page.run_task(on_import_folder_click, _e),
         ),
+        ft.OutlinedButton(
+            "手动添加", icon=ft.Icons.ADD,
+            on_click=on_add_manual_click,
+        ),
         ft.OutlinedButton("导出 xlsx", icon=ft.Icons.DOWNLOAD,
                           on_click=on_export_xlsx_click),
         ft.OutlinedButton("导出 zip", icon=ft.Icons.FOLDER_ZIP,
@@ -439,6 +470,10 @@ def build_project_view(page: ft.Page, state: AppState,
                              weight=ft.FontWeight.W_500)
 
     def open_pdf(invoice):
+        if invoice.file_name.startswith("[手动]"):
+            page.show_dialog(ft.SnackBar(
+                content=ft.Text("手动添加的条目没有 PDF 文件")))
+            return
         pdf_path = Path(p.folder_path) / invoice.file_name
         if not pdf_path.exists():
             page.show_dialog(ft.SnackBar(
@@ -451,6 +486,10 @@ def build_project_view(page: ft.Page, state: AppState,
                 content=ft.Text(f"打开失败: {ex}")))
 
     async def save_as(invoice):
+        if invoice.file_name.startswith("[手动]"):
+            page.show_dialog(ft.SnackBar(
+                content=ft.Text("手动添加的条目没有 PDF 文件")))
+            return
         src = Path(p.folder_path) / invoice.file_name
         if not src.exists():
             page.show_dialog(ft.SnackBar(
