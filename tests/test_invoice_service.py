@@ -256,7 +256,7 @@ def test_import_pdf_with_copy(conn, project, tmp_path):
     with patch("accounting.services.invoice_service.extractor.extract",
                return_value=fake_meta):
         inv = ivs.import_pdf(conn, project.id, src,
-                             copy_to=project_dir)
+                             copy_to=project_dir, rename=False)
     # Original is still in src; a copy is now in project_dir
     assert (project_dir / "x.pdf").exists()
     assert src.exists()
@@ -283,3 +283,129 @@ def test_import_pdf_copy_collision_uses_safe_name(conn, project, tmp_path):
     assert (project_dir / "x (2).pdf").exists()
     # Pre-existing not overwritten:
     assert (project_dir / "x.pdf").read_bytes() == b"v1"
+
+
+def test_import_pdf_dedupe_by_invoice_no(conn, project, tmp_path):
+    """Same invoice_no in same project -> second import returns None, no copy."""
+    src1 = tmp_path / "first.pdf"
+    src1.write_bytes(b"v1")
+    src2 = tmp_path / "second.pdf"
+    src2.write_bytes(b"v2")
+    project_dir = tmp_path / "proj"
+    project_dir.mkdir()
+    fake_meta = {
+        "amount": "10.00", "amount_reason": None,
+        "invoice_no": "DUPE123", "date": None,
+        "invoice_date_iso": None, "seller": "S",
+    }
+    with patch("accounting.services.invoice_service.extractor.extract",
+               return_value=fake_meta):
+        first = ivs.import_pdf(conn, project.id, src1, copy_to=project_dir)
+        assert first is not None
+        second = ivs.import_pdf(conn, project.id, src2, copy_to=project_dir)
+        assert second is None
+    # Only the first PDF was copied
+    files = list(project_dir.glob("*.pdf"))
+    assert len(files) == 1
+
+
+def test_import_pdf_dedupe_per_project_not_global(conn, tmp_path):
+    """Same invoice_no in different projects is fine."""
+    p1 = ps.create_project(conn, name="P1", folder_path=str(tmp_path / "p1"))
+    p2 = ps.create_project(conn, name="P2", folder_path=str(tmp_path / "p2"))
+    src = tmp_path / "x.pdf"
+    src.write_bytes(b"x")
+    fake_meta = {
+        "amount": None, "amount_reason": None,
+        "invoice_no": "SHARED", "date": None,
+        "invoice_date_iso": None, "seller": None,
+    }
+    with patch("accounting.services.invoice_service.extractor.extract",
+               return_value=fake_meta):
+        a = ivs.import_pdf(conn, p1.id, src,
+                           copy_to=Path(p1.folder_path))
+        b = ivs.import_pdf(conn, p2.id, src,
+                           copy_to=Path(p2.folder_path))
+    assert a is not None and b is not None  # both succeed
+
+
+def test_import_pdf_dedupe_disabled(conn, project, tmp_path):
+    src = tmp_path / "x.pdf"
+    src.write_bytes(b"x")
+    fake_meta = {
+        "amount": None, "amount_reason": None,
+        "invoice_no": "SAME", "date": None,
+        "invoice_date_iso": None, "seller": None,
+    }
+    with patch("accounting.services.invoice_service.extractor.extract",
+               return_value=fake_meta):
+        ivs.import_pdf(conn, project.id, src, dedupe=False)
+        # Without dedupe, second insert hits UNIQUE(project_id, file_name) -> raises
+        with pytest.raises(Exception):
+            ivs.import_pdf(conn, project.id, src, dedupe=False)
+
+
+def test_import_pdf_renames_with_price_prefix(conn, project, tmp_path):
+    src = tmp_path / "原始名.pdf"
+    src.write_bytes(b"x")
+    project_dir = tmp_path / "proj"
+    project_dir.mkdir()
+    fake_meta = {
+        "amount": "98.01", "amount_reason": None,
+        "invoice_no": "X1", "date": None,
+        "invoice_date_iso": None, "seller": "S",
+    }
+    with patch("accounting.services.invoice_service.extractor.extract",
+               return_value=fake_meta):
+        inv = ivs.import_pdf(conn, project.id, src, copy_to=project_dir)
+    assert inv.file_name == "98.01元-原始名.pdf"
+    assert (project_dir / "98.01元-原始名.pdf").exists()
+
+
+def test_import_pdf_already_prefixed_not_double_prefixed(conn, project, tmp_path):
+    src = tmp_path / "16.60元-发票.pdf"
+    src.write_bytes(b"x")
+    project_dir = tmp_path / "proj"
+    project_dir.mkdir()
+    fake_meta = {
+        "amount": "16.60", "amount_reason": None,
+        "invoice_no": "X2", "date": None,
+        "invoice_date_iso": None, "seller": "S",
+    }
+    with patch("accounting.services.invoice_service.extractor.extract",
+               return_value=fake_meta):
+        inv = ivs.import_pdf(conn, project.id, src, copy_to=project_dir)
+    assert inv.file_name == "16.60元-发票.pdf"  # not 16.60元-16.60元-...
+
+
+def test_import_pdf_no_amount_skips_rename(conn, project, tmp_path):
+    src = tmp_path / "abc.pdf"
+    src.write_bytes(b"x")
+    project_dir = tmp_path / "proj"
+    project_dir.mkdir()
+    fake_meta = {
+        "amount": None, "amount_reason": "no amount",
+        "invoice_no": "X3", "date": None,
+        "invoice_date_iso": None, "seller": None,
+    }
+    with patch("accounting.services.invoice_service.extractor.extract",
+               return_value=fake_meta):
+        inv = ivs.import_pdf(conn, project.id, src, copy_to=project_dir)
+    assert inv.file_name == "abc.pdf"  # no rename when amount is None
+
+
+def test_import_pdf_rename_disabled(conn, project, tmp_path):
+    src = tmp_path / "y.pdf"
+    src.write_bytes(b"x")
+    project_dir = tmp_path / "proj"
+    project_dir.mkdir()
+    fake_meta = {
+        "amount": "10.00", "amount_reason": None,
+        "invoice_no": "X4", "date": None,
+        "invoice_date_iso": None, "seller": None,
+    }
+    with patch("accounting.services.invoice_service.extractor.extract",
+               return_value=fake_meta):
+        inv = ivs.import_pdf(conn, project.id, src,
+                             copy_to=project_dir, rename=False)
+    assert inv.file_name == "y.pdf"  # not 10.00元-y.pdf

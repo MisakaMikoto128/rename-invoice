@@ -4,8 +4,9 @@ import sqlite3
 from pathlib import Path
 from typing import List, Optional
 
-from accounting import extractor
+from accounting import extractor  # noqa: F401  (also patches sys.path for rename_invoice)
 from accounting.models import Invoice, VALID_STATUS
+from rename_invoice import ALREADY_PREFIXED_RE
 
 
 # 仅允许编辑这几列, 防 SQL 注入 (column 名从 UI 来)
@@ -150,17 +151,36 @@ def update_invoice_fields(conn: sqlite3.Connection, invoice_id: int,
 
 def import_pdf(conn: sqlite3.Connection, project_id: int,
                pdf_path: Path,
-               copy_to: Optional[Path] = None) -> Invoice:
-    """读 PDF -> 提字段 -> 可选复制到 project 目录 -> INSERT invoice 行."""
+               copy_to: Optional[Path] = None,
+               rename: bool = True,
+               dedupe: bool = True) -> Optional[Invoice]:
+    """读 PDF -> 提字段 -> (按发票号去重) -> (可选改名加 ¥前缀) -> (可选拷贝) -> INSERT.
+
+    返回新建的 Invoice; 如 dedupe 命中已存在的 invoice_no, 返回 None.
+    """
     src = Path(pdf_path)
     meta = extractor.extract(src)
+
+    if dedupe and meta.get("invoice_no"):
+        existing = conn.execute(
+            "SELECT id FROM invoice WHERE project_id = ? AND invoice_no = ?",
+            (project_id, meta["invoice_no"]),
+        ).fetchone()
+        if existing is not None:
+            return None  # 同项目内已存在该 invoice_no, 跳过 (不复制不入库)
+
+    target_basename = src.name
+    if copy_to is not None and rename and meta.get("amount"):
+        if not ALREADY_PREFIXED_RE.match(src.name):
+            target_basename = f"{meta['amount']}元-{src.name}"
 
     if copy_to is not None:
         dest_dir = Path(copy_to)
         dest_dir.mkdir(parents=True, exist_ok=True)
-        target = dest_dir / src.name
+        target = dest_dir / target_basename
         if target.exists():
-            stem, suffix = src.stem, src.suffix
+            stem = Path(target_basename).stem
+            suffix = Path(target_basename).suffix
             n = 2
             while True:
                 candidate = dest_dir / f"{stem} ({n}){suffix}"
@@ -171,7 +191,7 @@ def import_pdf(conn: sqlite3.Connection, project_id: int,
         shutil.copy2(src, target)
         file_name = target.name
     else:
-        file_name = src.name
+        file_name = target_basename
 
     amt: Optional[float] = None
     if meta.get("amount"):
