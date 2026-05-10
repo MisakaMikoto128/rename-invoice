@@ -25,6 +25,7 @@ def main(page: ft.Page):
     def render_main():
         state.select_project(None)
         state.search_query = ""
+        state.status_filter = None
 
         from accounting.services import project_service as ps_local
         from accounting.ui.dialogs import (

@@ -65,11 +65,20 @@ def build_project_view(page: ft.Page, state: AppState,
 
     # Lift invoice fetch + total here so closures below can reference `invoices`
     # via late-binding (handlers fire after this returns, so `invoices` is bound).
+    # We also fetch all_invoices independent of search/status filters so the
+    # chip counts stay stable as filters change.
+    all_invoices = ivs.list_invoices(state.conn, p.id)
+    status_counts = {None: len(all_invoices)}  # None key = 全部
+    for s in VALID_STATUS:
+        status_counts[s] = sum(1 for inv in all_invoices if inv.status == s)
+
     if state.search_query:
         invoices = ivs.search_invoices(state.conn, state.search_query,
                                        project_id=p.id)
     else:
-        invoices = ivs.list_invoices(state.conn, p.id)
+        invoices = list(all_invoices)
+    if state.status_filter is not None:
+        invoices = [inv for inv in invoices if inv.status == state.status_filter]
     total = sum(inv.amount or 0 for inv in invoices)
 
     def _total_prefix():
@@ -259,6 +268,31 @@ def build_project_view(page: ft.Page, state: AppState,
         hint_text="搜索发票号/销售方/备注/淘宝单号/文件名",
         prefix_icon=ft.Icons.SEARCH, dense=True, expand=True,
     )
+
+    def set_status_filter(new_filter):
+        state.status_filter = new_filter  # None for 全部
+        on_changed()
+
+    def make_chip(label, key, is_selected):
+        return ft.Container(
+            content=ft.Text(
+                f"{label} ({status_counts[key]})",
+                color="white" if is_selected else None,
+                size=12, weight=ft.FontWeight.W_500,
+            ),
+            bgcolor=(ft.Colors.BLUE_400 if is_selected
+                     else ft.Colors.SURFACE_CONTAINER_HIGH),
+            padding=ft.Padding.symmetric(horizontal=12, vertical=6),
+            border_radius=14,
+            on_click=lambda _e, k=key: set_status_filter(k),
+        )
+
+    chip_row = ft.Row([
+        make_chip("全部", None, state.status_filter is None),
+        make_chip("未报销", "未报销", state.status_filter == "未报销"),
+        make_chip("报销中", "报销中", state.status_filter == "报销中"),
+        make_chip("已报销", "已报销", state.status_filter == "已报销"),
+    ], spacing=8)
 
     def make_status_dd(invoice_id, current):
         # Flet 0.85 Dropdown uses `on_select`, and it must be wired via the
@@ -454,6 +488,9 @@ def build_project_view(page: ft.Page, state: AppState,
                                                project_id=p.id)
         else:
             new_invoices = ivs.list_invoices(state.conn, p.id)
+        if state.status_filter is not None:
+            new_invoices = [inv for inv in new_invoices
+                            if inv.status == state.status_filter]
         invoices = new_invoices  # rebind so export handlers + _total_prefix see filtered list
         table.rows = build_rows(new_invoices)
         new_total = sum(inv.amount or 0 for inv in new_invoices)
@@ -490,6 +527,8 @@ def build_project_view(page: ft.Page, state: AppState,
     return ft.Column([
         header,
         ft.Container(content=search_field, padding=10),
+        ft.Container(content=chip_row,
+                     padding=ft.Padding.symmetric(horizontal=10, vertical=4)),
         ft.Divider(height=1),
         ft.Row([pdf_list_pane, ft.VerticalDivider(width=1), table_pane],
                expand=True),
