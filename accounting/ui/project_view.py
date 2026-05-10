@@ -228,9 +228,21 @@ def build_project_view(page: ft.Page, state: AppState,
         on_select=on_status_change,
     )
 
+    def on_rename_click(_e):
+        from accounting.ui.dialogs import show_rename_project_dialog
+
+        def confirm(new_name):
+            ps.update_project(state.conn, p.id, name=new_name)
+            state.refresh_projects()
+            on_changed()
+
+        show_rename_project_dialog(page, p.name, confirm)
+
     header = ft.Row([
         ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=lambda _e: on_back()),
         ft.Text(p.name, size=20, weight=ft.FontWeight.BOLD),
+        ft.IconButton(icon=ft.Icons.EDIT, tooltip="改项目名",
+                      on_click=on_rename_click),
         status_dd,
         ft.Container(expand=True),
         ft.ElevatedButton("+ 导入 PDF", icon=ft.Icons.UPLOAD_FILE,
