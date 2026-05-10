@@ -25,7 +25,7 @@ def main(page: ft.Page):
         state.search_query = ""
 
         from accounting.services import project_service as ps_local
-        from accounting.ui.dialogs import show_new_project_dialog
+        from accounting.ui.dialogs import show_new_project_dialog, show_confirm_dialog
 
         def new_project():
             def confirm(name):
@@ -34,10 +34,27 @@ def main(page: ft.Page):
                 render_main()
             show_new_project_dialog(page, confirm)
 
+        def delete_project_action(project_id):
+            project = ps_local.get_project(state.conn, project_id)
+            name = project.name if project else ""
+
+            def do_delete():
+                ps_local.delete_project(state.conn, project_id)
+                state.refresh_projects()
+                render_main()
+
+            show_confirm_dialog(
+                page,
+                title="删除项目",
+                message=f"确定删除项目 \"{name}\"? 数据库记录会清空（含发票），项目文件夹和 PDF 文件保留。",
+                on_confirm=do_delete,
+            )
+
         container.content = build_main_view(
             page, state,
             on_open_project=lambda pid: render_project(pid),
             on_new_project=new_project,
+            on_delete_project=delete_project_action,
         )
         page.update()
 

@@ -228,9 +228,21 @@ def build_project_view(page: ft.Page, state: AppState,
         on_select=on_status_change,
     )
 
+    def on_rename_click(_e):
+        from accounting.ui.dialogs import show_rename_project_dialog
+
+        def confirm(new_name):
+            ps.update_project(state.conn, p.id, name=new_name)
+            state.refresh_projects()
+            on_changed()
+
+        show_rename_project_dialog(page, p.name, confirm)
+
     header = ft.Row([
         ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=lambda _e: on_back()),
         ft.Text(p.name, size=20, weight=ft.FontWeight.BOLD),
+        ft.IconButton(icon=ft.Icons.EDIT, tooltip="改项目名",
+                      on_click=on_rename_click),
         status_dd,
         ft.Container(expand=True),
         ft.ElevatedButton("+ 导入 PDF", icon=ft.Icons.UPLOAD_FILE,
@@ -282,6 +294,20 @@ def build_project_view(page: ft.Page, state: AppState,
         display = "" if value is None else f"{value:.2f}"
         return EditableTextCell(display, on_save=save)
 
+    def confirm_delete_invoice(invoice_id, file_name):
+        from accounting.ui.dialogs import show_confirm_dialog
+
+        def do_delete():
+            ivs.delete_invoice(state.conn, invoice_id)
+            on_changed()
+
+        show_confirm_dialog(
+            page,
+            title="删除发票",
+            message=f"确定删除 \"{file_name}\" 的数据库记录? PDF 文件保留。",
+            on_confirm=do_delete,
+        )
+
     def build_rows(invoices_list):
         rows = []
         for inv in invoices_list:
@@ -296,6 +322,13 @@ def build_project_view(page: ft.Page, state: AppState,
                 ft.DataCell(make_field_cell(inv.id, "taobao_order", inv.taobao_order)),
                 ft.DataCell(make_amount_cell(inv.id, inv.amount)),
                 ft.DataCell(make_status_dd(inv.id, inv.status)),
+                ft.DataCell(ft.IconButton(
+                    icon=ft.Icons.DELETE_OUTLINE,
+                    icon_size=18,
+                    tooltip="删除发票",
+                    on_click=lambda _e, iid=inv.id, fname=inv.file_name:
+                        confirm_delete_invoice(iid, fname),
+                )),
             ]))
         return rows
 
@@ -309,6 +342,7 @@ def build_project_view(page: ft.Page, state: AppState,
             ft.DataColumn(ft.Text("淘宝单号")),
             ft.DataColumn(ft.Text("金额"), numeric=True),
             ft.DataColumn(ft.Text("状态")),
+            ft.DataColumn(ft.Text("")),
         ],
         rows=build_rows(invoices),
         column_spacing=10,
@@ -319,15 +353,29 @@ def build_project_view(page: ft.Page, state: AppState,
     pdf_count_text = ft.Text(f"PDF ({len(invoices)})", size=14,
                              weight=ft.FontWeight.W_500)
 
+    def open_pdf(invoice):
+        pdf_path = Path(p.folder_path) / invoice.file_name
+        if not pdf_path.exists():
+            page.show_dialog(ft.SnackBar(
+                content=ft.Text(f"文件不存在: {pdf_path}")))
+            return
+        try:
+            os.startfile(str(pdf_path))
+        except Exception as ex:
+            page.show_dialog(ft.SnackBar(
+                content=ft.Text(f"打开失败: {ex}")))
+
     def build_pdf_items(invoices_list):
         items = []
         for inv in invoices_list:
+            # default-arg trick (`inv=inv`) avoids late-binding bug — without
+            # it every row's handler would close over the loop's final inv.
             items.append(ft.ListTile(
                 leading=ft.Icon(ft.Icons.PICTURE_AS_PDF, color=ft.Colors.RED_400),
                 title=ft.Text(inv.file_name, size=12, no_wrap=True,
                               overflow=ft.TextOverflow.ELLIPSIS),
                 dense=True,
-                on_click=lambda _e, iid=inv.id: print(f"TODO highlight row for {iid}"),
+                on_click=lambda _e, inv=inv: open_pdf(inv),
             ))
         return items
 
