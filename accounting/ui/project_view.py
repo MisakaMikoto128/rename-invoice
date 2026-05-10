@@ -51,7 +51,7 @@ def build_project_view(page: ft.Page, state: AppState,
     )
 
     def on_status_change(_e):
-        ps.update_project_status(state.conn, p.id, status_dd.value)
+        ps.set_project_status_cascade(state.conn, p.id, status_dd.value)
         state.refresh_projects()
         on_changed()
 

@@ -64,3 +64,22 @@ def test_delete_project(conn):
     p = ps.create_project(conn, name="d", folder_path="C:/d")
     ps.delete_project(conn, p.id)
     assert ps.get_project(conn, p.id) is None
+
+
+def test_set_project_status_cascade(conn):
+    from accounting.services import invoice_service as ivs
+    p = ps.create_project(conn, name="P", folder_path="C:/cascade")
+    inv1 = ivs.create_invoice(conn, project_id=p.id, file_name="a.pdf",
+                              status="未报销")
+    inv2 = ivs.create_invoice(conn, project_id=p.id, file_name="b.pdf",
+                              status="未报销")
+    ps.set_project_status_cascade(conn, p.id, "已报销")
+    assert ps.get_project(conn, p.id).status == "已报销"
+    assert ivs.get_invoice(conn, inv1.id).status == "已报销"
+    assert ivs.get_invoice(conn, inv2.id).status == "已报销"
+
+
+def test_set_project_status_cascade_invalid_raises(conn):
+    p = ps.create_project(conn, name="P", folder_path="C:/cascade2")
+    with pytest.raises(ValueError):
+        ps.set_project_status_cascade(conn, p.id, "胡说")
