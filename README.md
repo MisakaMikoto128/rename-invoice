@@ -481,6 +481,25 @@ python test_parser.py
 
 如果你的发票样本无法识别，欢迎在 issue 里提供**脱敏后的**样本（公司名、号码可涂黑，金额字段保留）。
 
+---
+
+## 本地账目管理 GUI (v0.5.0+)
+
+如果你想跨多次报销批次跟踪发票, rename-invoice 还内置一个 Flet 桌面应用:
+
+```bash
+pip install -r requirements.txt   # 包含 flet
+python -m accounting.ui.app
+```
+
+启动后会出现一个 1200×720 的窗口:
+
+- **主窗口**: 左侧项目列表, 右侧跨项目的报销状态统计 (已报销/报销中/未报销 各多少张, 总额)
+- **项目详情**: 点项目进入, 上方是 PDF 列表, 下方是可编辑表格 (点单元格直接改备注/淘宝单号/金额等), 右上角状态下拉切换报销状态
+- **数据库**: `%APPDATA%\rename-invoice\accounts.db` (SQLite, 单文件备份)
+
+仍支持原有的 CLI 用法; GUI 是可选的.
+
 ## 致谢
 
 - [PyMuPDF](https://github.com/pymupdf/PyMuPDF) — 优秀的 PDF 文本提取库
