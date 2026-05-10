@@ -1,29 +1,25 @@
-"""SPIKE: prove EditableTextCell works. Will be replaced in Task 3."""
+"""Flet entry. `python -m accounting.ui.app` launches the GUI."""
 import flet as ft
-from accounting.ui.widgets.editable_cell import EditableTextCell
+
+from accounting import db
+from accounting.ui.state import AppState
 
 
 def main(page: ft.Page):
-    page.title = "spike: editable cells"
-    page.window.width = 600
-    page.window.height = 300
+    page.title = "rename-invoice / 账目管理"
+    page.window.width = 1200
+    page.window.height = 720
+    page.theme_mode = ft.ThemeMode.LIGHT
 
-    log = ft.Text(value="(saved values appear here)")
+    state = AppState(db_path=str(db.default_db_path()))
+    state.init()
+    page.on_close = lambda _e: state.close()
 
-    def save(field_name):
-        return lambda new_value: setattr(log, "value",
-            f"saved {field_name}={new_value!r}") or log.update()
-
-    page.add(
-        ft.Column([
-            ft.Text("Click any cell to edit. Tab/Enter to save, Esc to cancel.",
-                    size=14),
-            EditableTextCell("foo", save("a")),
-            EditableTextCell("", save("b"), placeholder="(empty)"),
-            EditableTextCell("123.45", save("c")),
-            log,
-        ]),
-    )
+    # MainView injected in Task 6.
+    page.add(ft.Text(
+        f"AppState ready. {len(state.projects)} project(s) in DB.",
+        size=18,
+    ))
 
 
 if __name__ == "__main__":
