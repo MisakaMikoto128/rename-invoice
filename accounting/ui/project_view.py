@@ -127,6 +127,52 @@ def build_project_view(page: ft.Page, state: AppState,
         page.show_dialog(ft.SnackBar(content=ft.Text(msg)))
         on_changed()
 
+    async def on_import_folder_click(_e):
+        from pathlib import Path as _Path
+        initial = settings.get(settings.KEY_LAST_IMPORT_DIR)
+        folder = await file_picker.get_directory_path(
+            dialog_title="选择 PDF 文件夹",
+            initial_directory=initial,
+        )
+        if not folder:
+            return
+        folder_path = _Path(folder)
+        pdfs = sorted(folder_path.glob("*.pdf"))
+        if not pdfs:
+            page.show_dialog(ft.SnackBar(
+                content=ft.Text(f"文件夹里没有 PDF: {folder}")))
+            return
+
+        settings.set_value(settings.KEY_LAST_IMPORT_DIR, str(folder_path))
+
+        project_dir = _Path(p.folder_path)
+        imported = 0
+        duplicates = 0
+        failed: list[tuple[str, str]] = []
+        for pdf_path in pdfs:
+            try:
+                result = ivs.import_pdf(state.conn, p.id, pdf_path,
+                                        copy_to=project_dir)
+                if result is None:
+                    duplicates += 1
+                else:
+                    imported += 1
+            except Exception as ex:
+                failed.append((pdf_path.name, str(ex)))
+
+        parts = [f"扫描 {len(pdfs)} 个 PDF", f"导入 {imported}"]
+        if duplicates:
+            parts.append(f"跳过 {duplicates} 重复")
+        if failed:
+            parts.append(f"{len(failed)} 失败")
+        msg = "，".join(parts)
+        if failed:
+            msg += " — " + "; ".join(f"{n}: {e}" for n, e in failed[:3])
+            if len(failed) > 3:
+                msg += f"; (还有 {len(failed) - 3} 个)"
+        page.show_dialog(ft.SnackBar(content=ft.Text(msg)))
+        on_changed()
+
     async def on_export_xlsx_click(_e):
         from pathlib import Path as _Path
         save_path = await file_picker.save_file(
@@ -257,6 +303,10 @@ def build_project_view(page: ft.Page, state: AppState,
         ft.Container(expand=True),
         ft.ElevatedButton("+ 导入 PDF", icon=ft.Icons.UPLOAD_FILE,
                           on_click=on_pick_click),
+        ft.OutlinedButton(
+            "导入文件夹", icon=ft.Icons.FOLDER_OPEN,
+            on_click=lambda _e: page.run_task(on_import_folder_click, _e),
+        ),
         ft.OutlinedButton("导出 xlsx", icon=ft.Icons.DOWNLOAD,
                           on_click=on_export_xlsx_click),
         ft.OutlinedButton("导出 zip", icon=ft.Icons.FOLDER_ZIP,
