@@ -68,7 +68,24 @@ def build_project_view(page: ft.Page, state: AppState,
                           on_click=lambda _e: print("TODO M3")),
     ])
 
-    invoices = ivs.list_invoices(state.conn, p.id)
+    if state.search_query:
+        invoices = ivs.search_invoices(state.conn, state.search_query,
+                                       project_id=p.id)
+    else:
+        invoices = ivs.list_invoices(state.conn, p.id)
+
+    search_field = ft.TextField(
+        value=state.search_query,
+        hint_text="搜索发票号/销售方/备注/淘宝单号/文件名",
+        prefix_icon=ft.Icons.SEARCH, dense=True, expand=True,
+    )
+
+    def apply_filter(_e=None):
+        state.search_query = (search_field.value or "").strip()
+        on_changed()
+
+    search_field.on_change = apply_filter
+
     pdf_items = []
     for inv in invoices:
         pdf_items.append(ft.ListTile(
@@ -170,6 +187,7 @@ def build_project_view(page: ft.Page, state: AppState,
 
     return ft.Column([
         header,
+        ft.Container(content=search_field, padding=10),
         ft.Divider(height=1),
         ft.Row([pdf_list_pane, ft.VerticalDivider(width=1), table_pane],
                expand=True),

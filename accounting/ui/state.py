@@ -13,6 +13,7 @@ class AppState:
     conn: Optional[object] = None  # sqlite3.Connection but typed loosely to avoid stubs
     projects: List[Project] = field(default_factory=list)
     current_project_id: Optional[int] = None
+    search_query: str = ""
 
     def init(self) -> None:
         db.init_schema(self.db_path)
