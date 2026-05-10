@@ -14,6 +14,7 @@ class AppState:
     projects: List[Project] = field(default_factory=list)
     current_project_id: Optional[int] = None
     search_query: str = ""
+    status_filter: Optional[str] = None  # None = "全部"; otherwise one of VALID_STATUS
 
     def init(self) -> None:
         db.init_schema(self.db_path)
