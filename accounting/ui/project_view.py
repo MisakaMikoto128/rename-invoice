@@ -12,7 +12,8 @@ from accounting.ui.widgets.amount_text import format_amount
 
 
 def build_project_view(page: ft.Page, state: AppState,
-                       on_back: Callable[[], None]) -> ft.Control:
+                       on_back: Callable[[], None],
+                       on_changed: Callable[[], None]) -> ft.Control:
     p = state.current_project
     if p is None:
         return ft.Text("(no project selected)")
@@ -26,6 +27,7 @@ def build_project_view(page: ft.Page, state: AppState,
     def on_status_change(_e):
         ps.update_project_status(state.conn, p.id, status_dd.value)
         state.refresh_projects()
+        on_changed()
 
     status_dd.on_change = on_status_change
 
@@ -72,6 +74,7 @@ def build_project_view(page: ft.Page, state: AppState,
         )
         def on_change(_e):
             ivs.update_invoice_status(state.conn, invoice_id, dd.value)
+            on_changed()
         dd.on_change = on_change
         return dd
 
@@ -79,6 +82,7 @@ def build_project_view(page: ft.Page, state: AppState,
         def save(new_value):
             ivs.update_invoice_field(state.conn, invoice_id, column,
                                      new_value if new_value else None)
+            on_changed()
         return EditableTextCell(value, on_save=save)
 
     def make_amount_cell(invoice_id, value):
@@ -88,6 +92,7 @@ def build_project_view(page: ft.Page, state: AppState,
             except ValueError:
                 amt = value  # revert silently on invalid input
             ivs.update_invoice_field(state.conn, invoice_id, "amount", amt)
+            on_changed()
         display = "" if value is None else f"{value:.2f}"
         return EditableTextCell(display, on_save=save)
 
