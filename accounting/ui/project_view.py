@@ -278,8 +278,18 @@ def build_project_view(page: ft.Page, state: AppState,
     pdf_list_view = ft.ListView(controls=build_pdf_items(invoices),
                                 expand=True, spacing=0)
     pdf_empty_placeholder = ft.Container(
-        content=ft.Text("(空 — 拖入 PDF 或点上方导入)",
-                        color=ft.Colors.OUTLINE, size=12),
+        content=ft.Column([
+            ft.Icon(ft.Icons.UPLOAD_FILE,
+                    color=ft.Colors.OUTLINE, size=32),
+            ft.Text("暂无 PDF",
+                    color=ft.Colors.OUTLINE, size=13,
+                    weight=ft.FontWeight.W_500,
+                    text_align=ft.TextAlign.CENTER),
+            ft.Text("请点上方「+ 导入 PDF」按钮选择文件\n(当前 Flet 版本暂不支持系统拖放)",
+                    color=ft.Colors.OUTLINE, size=11,
+                    text_align=ft.TextAlign.CENTER),
+        ], horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+           alignment=ft.MainAxisAlignment.CENTER, spacing=8),
         padding=20,
         visible=not invoices,
     )
