@@ -171,18 +171,21 @@ def build_project_view(page: ft.Page, state: AppState,
         )
         page.show_dialog(dialog)
 
-    status_dd = ft.Dropdown(
-        value=p.status,
-        options=[ft.dropdown.Option(s) for s in VALID_STATUS],
-        width=120,
-    )
-
+    # Define handler before Dropdown construction. In Flet 0.85 the Dropdown
+    # event is `on_select` (not `on_change`), and it must be passed via the
+    # constructor — assigning it post-hoc on the dataclass is a no-op because
+    # the renderer only serializes declared fields.
     def on_status_change(_e):
         ps.set_project_status_cascade(state.conn, p.id, status_dd.value)
         state.refresh_projects()
         on_changed()
 
-    status_dd.on_change = on_status_change
+    status_dd = ft.Dropdown(
+        value=p.status,
+        options=[ft.dropdown.Option(s) for s in VALID_STATUS],
+        width=120,
+        on_select=on_status_change,
+    )
 
     header = ft.Row([
         ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=lambda _e: on_back()),
@@ -210,15 +213,20 @@ def build_project_view(page: ft.Page, state: AppState,
     )
 
     def make_status_dd(invoice_id, current):
+        # Flet 0.85 Dropdown uses `on_select`, and it must be wired via the
+        # constructor (late-assignment is a no-op because the renderer only
+        # serializes declared dataclass fields). We read the new value from
+        # `e.control.value` since `dd` isn't yet bound when the handler is
+        # defined.
+        def on_select(e):
+            ivs.update_invoice_status(state.conn, invoice_id, e.control.value)
+            on_changed()
         dd = ft.Dropdown(
             value=current,
             options=[ft.dropdown.Option(s) for s in VALID_STATUS],
             dense=True, width=110,
+            on_select=on_select,
         )
-        def on_change(_e):
-            ivs.update_invoice_status(state.conn, invoice_id, dd.value)
-            on_changed()
-        dd.on_change = on_change
         return dd
 
     def make_field_cell(invoice_id, column, value):
