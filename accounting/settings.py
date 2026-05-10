@@ -45,3 +45,4 @@ def set_value(key: str, value: Optional[str]) -> None:
 KEY_LAST_IMPORT_DIR = "last_import_dir"
 KEY_LAST_EXPORT_XLSX_DIR = "last_export_xlsx_dir"
 KEY_LAST_EXPORT_ZIP_DIR = "last_export_zip_dir"
+KEY_LAST_SAVE_AS_DIR = "last_save_as_dir"
