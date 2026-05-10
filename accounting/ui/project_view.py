@@ -424,10 +424,15 @@ def build_project_view(page: ft.Page, state: AppState,
             on_confirm=do_delete,
         )
 
+    def needs_attention(inv):
+        # Highlight when 备注 OR 淘宝单号 is missing/blank.
+        return (not (inv.remark and inv.remark.strip()) or
+                not (inv.taobao_order and inv.taobao_order.strip()))
+
     def build_rows(invoices_list):
         rows = []
         for inv in invoices_list:
-            rows.append(ft.DataRow(cells=[
+            cells = [
                 ft.DataCell(ft.Text(inv.file_name, no_wrap=True,
                                     overflow=ft.TextOverflow.ELLIPSIS,
                                     tooltip=inv.file_name)),
@@ -445,7 +450,9 @@ def build_project_view(page: ft.Page, state: AppState,
                     on_click=lambda _e, iid=inv.id, fname=inv.file_name:
                         confirm_delete_invoice(iid, fname),
                 )),
-            ]))
+            ]
+            row_color = "#FFF8E1" if needs_attention(inv) else None  # light amber
+            rows.append(ft.DataRow(cells=cells, color=row_color))
         return rows
 
     table = ft.DataTable(
