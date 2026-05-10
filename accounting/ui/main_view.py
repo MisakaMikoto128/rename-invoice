@@ -10,8 +10,10 @@ from accounting.ui.widgets.status_chip import status_chip
 
 def build_main_view(page: ft.Page, state: AppState,
                     on_open_project: Callable[[int], None],
-                    on_new_project: Callable[[], None]) -> ft.Control:
-    sidebar = _build_sidebar(state, on_open_project, on_new_project)
+                    on_new_project: Callable[[], None],
+                    on_delete_project: Callable[[int], None]) -> ft.Control:
+    sidebar = _build_sidebar(state, on_open_project, on_new_project,
+                             on_delete_project)
     stats_card = _build_stats_card(state)
     return ft.Row(
         [sidebar, ft.VerticalDivider(width=1), stats_card],
@@ -19,7 +21,8 @@ def build_main_view(page: ft.Page, state: AppState,
     )
 
 
-def _build_sidebar(state: AppState, on_open_project, on_new_project) -> ft.Control:
+def _build_sidebar(state: AppState, on_open_project, on_new_project,
+                   on_delete_project) -> ft.Control:
     items = []
     for p in state.projects:
         items.append(
@@ -27,6 +30,12 @@ def _build_sidebar(state: AppState, on_open_project, on_new_project) -> ft.Contr
                 title=ft.Text(p.name),
                 subtitle=status_chip(p.status),
                 on_click=lambda _e, pid=p.id: on_open_project(pid),
+                trailing=ft.IconButton(
+                    icon=ft.Icons.DELETE_OUTLINE,
+                    icon_size=18,
+                    tooltip="删除项目",
+                    on_click=lambda _e, pid=p.id: on_delete_project(pid),
+                ),
             )
         )
     return ft.Container(
