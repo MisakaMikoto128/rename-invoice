@@ -44,6 +44,35 @@ def build_project_view(page: ft.Page, state: AppState,
                 page.update()
         on_changed()
 
+    async def on_export_xlsx_click(_e):
+        from pathlib import Path as _Path
+        save_path = await file_picker.save_file(
+            dialog_title="导出 xlsx",
+            file_name=f"{p.name}_发票汇总.xlsx",
+            allowed_extensions=["xlsx"],
+            file_type=ft.FilePickerFileType.CUSTOM,
+        )
+        if not save_path:
+            return
+        try:
+            from rename_invoice import write_summary_xlsx
+            rows = [
+                {
+                    "filename": inv.file_name,
+                    "invoice_no": inv.invoice_no,
+                    "date": inv.invoice_date,
+                    "seller": inv.seller,
+                    "amount": inv.amount,
+                }
+                for inv in invoices
+            ]
+            write_summary_xlsx(rows, _Path(save_path))
+            page.show_dialog(ft.SnackBar(
+                content=ft.Text(f"已导出 xlsx: {save_path}")))
+        except Exception as ex:
+            page.show_dialog(ft.SnackBar(
+                content=ft.Text(f"导出失败: {ex}")))
+
     status_dd = ft.Dropdown(
         value=p.status,
         options=[ft.dropdown.Option(s) for s in VALID_STATUS],
@@ -65,7 +94,7 @@ def build_project_view(page: ft.Page, state: AppState,
         ft.ElevatedButton("+ 导入 PDF", icon=ft.Icons.UPLOAD_FILE,
                           on_click=on_pick_click),
         ft.OutlinedButton("导出 xlsx", icon=ft.Icons.DOWNLOAD,
-                          on_click=lambda _e: print("TODO M3")),
+                          on_click=on_export_xlsx_click),
     ])
 
     if state.search_query:
