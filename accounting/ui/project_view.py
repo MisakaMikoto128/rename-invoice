@@ -1,5 +1,6 @@
 """Project detail view: header (back/import/export/status) + two-pane (PDF list / table)."""
 import os
+import shutil
 import tempfile
 import zipfile
 from pathlib import Path
@@ -365,6 +366,32 @@ def build_project_view(page: ft.Page, state: AppState,
             page.show_dialog(ft.SnackBar(
                 content=ft.Text(f"打开失败: {ex}")))
 
+    async def save_as(invoice):
+        src = Path(p.folder_path) / invoice.file_name
+        if not src.exists():
+            page.show_dialog(ft.SnackBar(
+                content=ft.Text(f"文件不存在: {src}")))
+            return
+        initial = settings.get(settings.KEY_LAST_SAVE_AS_DIR)
+        save_path = await file_picker.save_file(
+            dialog_title="另存为",
+            file_name=invoice.file_name,
+            initial_directory=initial,
+            allowed_extensions=["pdf"],
+            file_type=ft.FilePickerFileType.CUSTOM,
+        )
+        if not save_path:
+            return
+        try:
+            shutil.copy2(str(src), save_path)
+            settings.set_value(settings.KEY_LAST_SAVE_AS_DIR,
+                               os.path.dirname(save_path))
+            page.show_dialog(ft.SnackBar(
+                content=ft.Text(f"已另存到 {save_path}")))
+        except Exception as ex:
+            page.show_dialog(ft.SnackBar(
+                content=ft.Text(f"保存失败: {ex}")))
+
     def build_pdf_items(invoices_list):
         items = []
         for inv in invoices_list:
@@ -374,6 +401,15 @@ def build_project_view(page: ft.Page, state: AppState,
                 leading=ft.Icon(ft.Icons.PICTURE_AS_PDF, color=ft.Colors.RED_400),
                 title=ft.Text(inv.file_name, size=12, no_wrap=True,
                               overflow=ft.TextOverflow.ELLIPSIS),
+                trailing=ft.IconButton(
+                    icon=ft.Icons.SAVE_AS,
+                    icon_size=18,
+                    tooltip="另存为",
+                    # page.run_task in Flet 0.85 takes a coroutine without
+                    # extra args, so wrap save_as(inv) in a lambda.
+                    on_click=lambda _e, _inv=inv:
+                        page.run_task(lambda: save_as(_inv)),
+                ),
                 dense=True,
                 on_click=lambda _e, inv=inv: open_pdf(inv),
             ))
