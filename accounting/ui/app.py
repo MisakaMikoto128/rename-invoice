@@ -44,16 +44,29 @@ def main(page: ft.Page):
             project = ps_local.get_project(state.conn, project_id)
             name = project.name if project else ""
 
-            def do_delete():
-                ps_local.delete_project(state.conn, project_id)
+            def do_trash():
+                ps_local.trash_project(state.conn, project_id)
                 state.refresh_projects()
                 render_main()
+
+                def undo(_e):
+                    ps_local.restore_project(state.conn, project_id)
+                    state.refresh_projects()
+                    render_main()
+
+                page.show_dialog(ft.SnackBar(
+                    content=ft.Text(f"项目 \"{name}\" 已移到回收站"),
+                    action="撤销",
+                    on_action=undo,
+                ))
 
             show_confirm_dialog(
                 page,
                 title="删除项目",
-                message=f"确定删除项目 \"{name}\"? 数据库记录会清空（含发票），项目文件夹和 PDF 文件保留。",
-                on_confirm=do_delete,
+                message=(f"将 \"{name}\" 移到回收站? "
+                         f"项目下所有发票数据会一并标记删除（可恢复）。"
+                         f"PDF 文件保留在原文件夹里。"),
+                on_confirm=do_trash,
             )
 
         async def _start_migrate():
@@ -103,6 +116,7 @@ def main(page: ft.Page):
             on_delete_project=delete_project_action,
             on_open_settings=open_settings,
             on_open_invoice_in_project=open_invoice_in_project,
+            on_open_trash=render_trash,
         )
         page.update()
 
@@ -115,6 +129,22 @@ def main(page: ft.Page):
 
         container.content = build_project_view(
             page, state, on_back=render_main, on_changed=reload,
+        )
+        page.update()
+
+    def render_trash():
+        state.refresh_projects()
+        from accounting.ui.trash_view import build_trash_view
+        from accounting.ui.dialogs import show_confirm_dialog as _confirm
+
+        def confirm_helper(title, message, on_confirm):
+            _confirm(page, title=title, message=message,
+                     on_confirm=on_confirm)
+
+        container.content = build_trash_view(
+            state, on_back=render_main,
+            on_changed=lambda: render_trash(),
+            show_confirm=confirm_helper,
         )
         page.update()
 
