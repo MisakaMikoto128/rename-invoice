@@ -5,9 +5,13 @@ from typing import List, Optional
 from accounting.models import Project, VALID_STATUS
 
 
-def create_project(conn: sqlite3.Connection, name: str, folder_path: str,
+def create_project(conn: sqlite3.Connection, name: str,
+                   folder_path: Optional[str] = None,
                    note: Optional[str] = None,
                    status: str = "未报销") -> Project:
+    if folder_path is None:
+        from accounting.storage import auto_project_folder
+        folder_path = str(auto_project_folder(name))
     cur = conn.execute(
         "INSERT INTO project(name, folder_path, note, status) "
         "VALUES (?, ?, ?, ?)",

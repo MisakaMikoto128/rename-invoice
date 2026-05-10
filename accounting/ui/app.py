@@ -28,8 +28,8 @@ def main(page: ft.Page):
         from accounting.ui.dialogs import show_new_project_dialog
 
         def new_project():
-            def confirm(name, folder):
-                ps_local.create_project(state.conn, name=name, folder_path=folder)
+            def confirm(name):
+                ps_local.create_project(state.conn, name=name)  # folder_path auto
                 state.refresh_projects()
                 render_main()
             show_new_project_dialog(page, confirm)
