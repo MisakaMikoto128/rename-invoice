@@ -1,4 +1,7 @@
 """Project detail view: header (back/import/export/status) + two-pane (PDF list / table)."""
+import tempfile
+import zipfile
+from pathlib import Path
 from typing import Callable
 import flet as ft
 
@@ -9,6 +12,41 @@ from accounting.ui.state import AppState
 from accounting.ui.widgets.status_chip import status_chip
 from accounting.ui.widgets.editable_cell import EditableTextCell
 from accounting.ui.widgets.amount_text import format_amount
+
+
+def _build_zip(target_path: str, invoices: list, project_folder: Path,
+               include_xlsx: bool) -> None:
+    """Bundle PDFs (and optionally an xlsx summary) into a zip at target_path.
+
+    Missing source files are skipped silently (e.g. file renamed/deleted on
+    disk after import). When include_xlsx is True, a temp xlsx is generated
+    via rename_invoice.write_summary_xlsx and embedded as 发票汇总.xlsx.
+    """
+    target = Path(target_path)
+    with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as zf:
+        for inv in invoices:
+            src = project_folder / inv.file_name
+            if src.exists():
+                zf.write(src, arcname=inv.file_name)
+        if include_xlsx:
+            from rename_invoice import write_summary_xlsx
+            tmp = tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False)
+            tmp.close()
+            try:
+                rows = [
+                    {
+                        "filename": inv.file_name,
+                        "invoice_no": inv.invoice_no,
+                        "date": inv.invoice_date,
+                        "seller": inv.seller,
+                        "amount": inv.amount,
+                    }
+                    for inv in invoices
+                ]
+                write_summary_xlsx(rows, Path(tmp.name))
+                zf.write(tmp.name, arcname="发票汇总.xlsx")
+            finally:
+                Path(tmp.name).unlink(missing_ok=True)
 
 
 def build_project_view(page: ft.Page, state: AppState,
@@ -73,6 +111,52 @@ def build_project_view(page: ft.Page, state: AppState,
             page.show_dialog(ft.SnackBar(
                 content=ft.Text(f"导出失败: {ex}")))
 
+    def on_export_zip_click(_e):
+        # Step 1: small modal asking for filename + checkbox.
+        # The actual save_file + zip-build runs inside on_ok (async),
+        # because page.show_dialog does not block.
+        name_input = ft.TextField(label="zip 文件名", value=f"{p.name}.zip",
+                                  autofocus=True)
+        include_xlsx = ft.Checkbox(label="同时附带 Excel 汇总 (xlsx)",
+                                   value=False)
+        error_text = ft.Text("", color=ft.Colors.RED, size=12)
+
+        async def on_ok(_e2):
+            if not (name_input.value or "").strip():
+                error_text.value = "文件名不能为空"
+                page.update()
+                return
+            zip_name = name_input.value.strip()
+            want_xlsx = bool(include_xlsx.value)
+            page.pop_dialog()
+            save_path = await file_picker.save_file(
+                dialog_title="保存 zip 到",
+                file_name=zip_name,
+                allowed_extensions=["zip"],
+                file_type=ft.FilePickerFileType.CUSTOM,
+            )
+            if not save_path:
+                return
+            try:
+                _build_zip(save_path, invoices, Path(p.folder_path),
+                           include_xlsx=want_xlsx)
+                page.show_dialog(ft.SnackBar(
+                    content=ft.Text(f"已导出 zip: {save_path}")))
+            except Exception as ex:
+                page.show_dialog(ft.SnackBar(
+                    content=ft.Text(f"导出失败: {ex}")))
+
+        dialog = ft.AlertDialog(
+            title=ft.Text("导出 zip"),
+            content=ft.Column([name_input, include_xlsx, error_text],
+                              tight=True, height=160, width=400),
+            actions=[
+                ft.TextButton("取消", on_click=lambda _e2: page.pop_dialog()),
+                ft.ElevatedButton("确认", on_click=on_ok),
+            ],
+        )
+        page.show_dialog(dialog)
+
     status_dd = ft.Dropdown(
         value=p.status,
         options=[ft.dropdown.Option(s) for s in VALID_STATUS],
@@ -95,6 +179,8 @@ def build_project_view(page: ft.Page, state: AppState,
                           on_click=on_pick_click),
         ft.OutlinedButton("导出 xlsx", icon=ft.Icons.DOWNLOAD,
                           on_click=on_export_xlsx_click),
+        ft.OutlinedButton("导出 zip", icon=ft.Icons.FOLDER_ZIP,
+                          on_click=on_export_zip_click),
     ])
 
     if state.search_query:
