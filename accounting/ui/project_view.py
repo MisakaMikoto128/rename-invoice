@@ -294,6 +294,20 @@ def build_project_view(page: ft.Page, state: AppState,
         display = "" if value is None else f"{value:.2f}"
         return EditableTextCell(display, on_save=save)
 
+    def confirm_delete_invoice(invoice_id, file_name):
+        from accounting.ui.dialogs import show_confirm_dialog
+
+        def do_delete():
+            ivs.delete_invoice(state.conn, invoice_id)
+            on_changed()
+
+        show_confirm_dialog(
+            page,
+            title="删除发票",
+            message=f"确定删除 \"{file_name}\" 的数据库记录? PDF 文件保留。",
+            on_confirm=do_delete,
+        )
+
     def build_rows(invoices_list):
         rows = []
         for inv in invoices_list:
@@ -308,6 +322,13 @@ def build_project_view(page: ft.Page, state: AppState,
                 ft.DataCell(make_field_cell(inv.id, "taobao_order", inv.taobao_order)),
                 ft.DataCell(make_amount_cell(inv.id, inv.amount)),
                 ft.DataCell(make_status_dd(inv.id, inv.status)),
+                ft.DataCell(ft.IconButton(
+                    icon=ft.Icons.DELETE_OUTLINE,
+                    icon_size=18,
+                    tooltip="删除发票",
+                    on_click=lambda _e, iid=inv.id, fname=inv.file_name:
+                        confirm_delete_invoice(iid, fname),
+                )),
             ]))
         return rows
 
@@ -321,6 +342,7 @@ def build_project_view(page: ft.Page, state: AppState,
             ft.DataColumn(ft.Text("淘宝单号")),
             ft.DataColumn(ft.Text("金额"), numeric=True),
             ft.DataColumn(ft.Text("状态")),
+            ft.DataColumn(ft.Text("")),
         ],
         rows=build_rows(invoices),
         column_spacing=10,
