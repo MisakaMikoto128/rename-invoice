@@ -7,6 +7,8 @@ from accounting.services import project_service as ps
 from accounting.services import invoice_service as ivs
 from accounting.ui.state import AppState
 from accounting.ui.widgets.status_chip import status_chip
+from accounting.ui.widgets.editable_cell import EditableTextCell
+from accounting.ui.widgets.amount_text import format_amount
 
 
 def build_project_view(page: ft.Page, state: AppState,
@@ -62,8 +64,76 @@ def build_project_view(page: ft.Page, state: AppState,
         ]),
         width=280, padding=10, bgcolor=ft.Colors.SURFACE_CONTAINER_LOW,
     )
+    def make_status_dd(invoice_id, current):
+        dd = ft.Dropdown(
+            value=current,
+            options=[ft.dropdown.Option(s) for s in VALID_STATUS],
+            dense=True, width=110,
+        )
+        def on_change(_e):
+            ivs.update_invoice_status(state.conn, invoice_id, dd.value)
+        dd.on_change = on_change
+        return dd
+
+    def make_field_cell(invoice_id, column, value):
+        def save(new_value):
+            ivs.update_invoice_field(state.conn, invoice_id, column,
+                                     new_value if new_value else None)
+        return EditableTextCell(value, on_save=save)
+
+    def make_amount_cell(invoice_id, value):
+        def save(new_value):
+            try:
+                amt = float(new_value) if new_value else None
+            except ValueError:
+                amt = value  # revert silently on invalid input
+            ivs.update_invoice_field(state.conn, invoice_id, "amount", amt)
+        display = "" if value is None else f"{value:.2f}"
+        return EditableTextCell(display, on_save=save)
+
+    rows = []
+    for inv in invoices:
+        rows.append(ft.DataRow(cells=[
+            ft.DataCell(ft.Text(inv.file_name, no_wrap=True,
+                                overflow=ft.TextOverflow.ELLIPSIS,
+                                tooltip=inv.file_name)),
+            ft.DataCell(make_field_cell(inv.id, "invoice_no", inv.invoice_no)),
+            ft.DataCell(make_field_cell(inv.id, "invoice_date", inv.invoice_date)),
+            ft.DataCell(make_field_cell(inv.id, "seller", inv.seller)),
+            ft.DataCell(make_field_cell(inv.id, "remark", inv.remark)),
+            ft.DataCell(make_field_cell(inv.id, "taobao_order", inv.taobao_order)),
+            ft.DataCell(make_amount_cell(inv.id, inv.amount)),
+            ft.DataCell(make_status_dd(inv.id, inv.status)),
+        ]))
+
+    table = ft.DataTable(
+        columns=[
+            ft.DataColumn(ft.Text("文件")),
+            ft.DataColumn(ft.Text("发票号")),
+            ft.DataColumn(ft.Text("日期")),
+            ft.DataColumn(ft.Text("销售方")),
+            ft.DataColumn(ft.Text("备注")),
+            ft.DataColumn(ft.Text("淘宝单号")),
+            ft.DataColumn(ft.Text("金额"), numeric=True),
+            ft.DataColumn(ft.Text("状态")),
+        ],
+        rows=rows,
+        column_spacing=10,
+    )
+
+    total = sum(inv.amount or 0 for inv in invoices)
     table_pane = ft.Container(
-        content=ft.Text("(invoice table - Task 9)"),
+        content=ft.Column([
+            ft.Container(content=table, expand=True),
+            ft.Container(
+                content=ft.Row([
+                    ft.Container(expand=True),
+                    ft.Text(f"合计 (本项目): {format_amount(total)}",
+                            weight=ft.FontWeight.BOLD, size=14),
+                ]),
+                padding=10,
+            ),
+        ]),
         expand=True, padding=10,
     )
 
