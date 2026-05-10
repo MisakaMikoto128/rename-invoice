@@ -4,6 +4,30 @@
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-05-10
+
+### Added
+
+CLI 工具之外**新增桌面 GUI**——本地报销账目管理（`python -m accounting.ui.app`）：
+
+- **新 Python 包 `accounting/`**：sqlite3 数据层 + 服务层 + Flet UI 三层架构，77 个单测
+- **项目化管理**：每个报销批次 = 一个项目，自动建文件夹于 `%APPDATA%\rename-invoice\projects\<项目名>\`
+- **Flet 桌面窗口**（1200×720，Material 3）：
+  - 主窗口：左侧项目列表 + 右侧跨项目报销状态统计（金额 + 张数）
+  - 项目详情：上方 PDF 列表 + 下方可编辑表格 8 列（文件 / 发票号 / 日期 / 销售方 / 备注 / 淘宝单号 / 金额 / 状态）
+  - 表格水平滚动 / 实时搜索（不丢焦点）/ 单元格点击编辑 / 状态下拉
+- **导入 PDF**：通过文件选择器（OS 拖放在 Flet 0.85 暂不支持），自动重命名加 `XX元-` 前缀，按发票号在项目内去重
+- **导出 xlsx**：复用 CLI 模式的 `write_summary_xlsx`，默认文件名 `<总额>元-<项目名>_发票汇总.xlsx`
+- **导出 zip**：打包项目内 PDF，可选附带 Excel 汇总，可选总价格前缀（默认 ON）
+- **项目状态级联**：改项目状态下拉同步更新项目下所有发票状态
+- **记住上次目录**：导入/导出/zip 三个文件选择器各自记住上次路径，存 `%APPDATA%\rename-invoice\settings.json`
+- **数据库** `%APPDATA%\rename-invoice\accounts.db` —— SQLite 单文件，方便备份
+
+### Notes
+
+- CLI 工具（重命名/Excel 汇总/右键菜单）原样保留，所有 CLI 行为不变
+- GUI 是**可选**，仅在你需要跨批次跟踪报销时有用
+
 ## [0.4.0] - 2026-05-09
 
 ### Changed
