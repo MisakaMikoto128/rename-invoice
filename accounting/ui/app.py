@@ -22,6 +22,7 @@ def main(page: ft.Page):
 
     def render_main():
         state.select_project(None)
+        state.search_query = ""
         container.content = build_main_view(
             page, state,
             on_open_project=lambda pid: render_project(pid),
