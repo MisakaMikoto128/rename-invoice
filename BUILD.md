@@ -35,12 +35,23 @@ flet pack accounting/ui/app.py `
   --name AccountManager `
   --icon assets/icon.ico `
   --add-data "rename_invoice.py;." `
-  --hidden-import rename_invoice `
-  --hidden-import fitz `
-  --hidden-import openpyxl `
+  --hidden-import rename_invoice fitz openpyxl `
   --product-name "AccountManager" `
   --file-description "Account Manager for rename-invoice" `
-  -y
+  -y `
+  "--pyinstaller-build-args=--exclude-module=matplotlib" `
+  "--pyinstaller-build-args=--exclude-module=PyQt5" `
+  "--pyinstaller-build-args=--exclude-module=PyQt6" `
+  "--pyinstaller-build-args=--exclude-module=PySide2" `
+  "--pyinstaller-build-args=--exclude-module=PySide6" `
+  "--pyinstaller-build-args=--exclude-module=scipy" `
+  "--pyinstaller-build-args=--exclude-module=pandas" `
+  "--pyinstaller-build-args=--exclude-module=tables" `
+  "--pyinstaller-build-args=--exclude-module=IPython" `
+  "--pyinstaller-build-args=--exclude-module=notebook" `
+  "--pyinstaller-build-args=--exclude-module=jupyter" `
+  "--pyinstaller-build-args=--exclude-module=sphinx" `
+  "--pyinstaller-build-args=--exclude-module=pytest"
 ```
 
 Notes on the flags:
@@ -48,19 +59,27 @@ Notes on the flags:
 - `--add-data "rename_invoice.py;."` bundles `rename_invoice.py` (top-level
   script at repo root) into the exe payload. The semicolon `;` is the Windows
   PyInstaller separator (Linux/macOS uses `:`).
-- `--hidden-import rename_invoice` — PyInstaller sees the import via static
-  analysis but the script-not-package layout sometimes confuses it; this is
-  belt-and-braces.
-- `--hidden-import fitz` / `--hidden-import openpyxl` — same reason, both are
-  imported lazily inside `rename_invoice.py`.
+- `--hidden-import rename_invoice fitz openpyxl` — PyInstaller sees these via
+  static analysis but the script-not-package layout sometimes confuses it;
+  belt-and-braces. (`flet pack`'s `--hidden-import` accepts multiple values.)
 - `accounting/extractor.py` was patched to look for `rename_invoice.py` in
   `sys._MEIPASS` when `sys.frozen` is set. Without that, the bundled copy is
   not found at runtime.
+- `--pyinstaller-build-args=--exclude-module=X` — `flet pack` does not expose
+  PyInstaller's `--exclude-module` directly, so we pass it through. The
+  `--pyinstaller-build-args=...` form (single token, `=`, quoted) is required
+  because argparse with `nargs='*'` will reject following `--`-prefixed
+  tokens; one repeated `--pyinstaller-build-args=...` per exclude works.
+- The 13 `--exclude-module` flags strip dev-only packages (matplotlib, PyQt,
+  scipy, pandas, jupyter stack, etc.) that PyInstaller pulls in transitively
+  from the dev environment. None of these are runtime deps — see
+  `requirements.txt`. **Do not** exclude `numpy` or `lxml` blindly: openpyxl /
+  pymupdf reach for them in some code paths.
 
 ## Output
 
 ```
-dist/AccountManager.exe   (~ 237 MB, single-file)
+dist/AccountManager.exe   (~ 106 MB, single-file)
 build/AccountManager/...  (PyInstaller intermediates — gitignored)
 AccountManager.spec       (PyInstaller spec — gitignored)
 ```
@@ -68,11 +87,10 @@ AccountManager.spec       (PyInstaller spec — gitignored)
 Both `build/`, `dist/`, and `*.spec` are listed in `.gitignore`. **Do not
 commit the binary** — it ships via GitHub Releases.
 
-The size (~237 MB) is dominated by transitive deps PyInstaller picks up from
-the dev site-packages (matplotlib, PyQt5, numpy, scipy, pandas). A future
-optimisation is to add `--exclude-module matplotlib --exclude-module PyQt5
---exclude-module scipy --exclude-module pandas` etc. — none of those are
-needed at runtime.
+Without the `--exclude-module` flags the exe was ~237 MB, dominated by
+transitive deps PyInstaller picks up from the dev site-packages (matplotlib,
+PyQt5, scipy, pandas, jupyter, …). With the excludes above the exe drops to
+~106 MB and still passes the 12-second smoke test below.
 
 ## Smoke test
 
@@ -97,8 +115,10 @@ loaded cleanly.
   cold start. If we care, switch to `flet pack -D ...` (one-folder mode) — the
   user gets a folder with `AccountManager.exe` inside, which starts in <1 s
   but distributes as a zip rather than a single file.
-- **Excluded heavy deps.** See "Output" above. Trimming would shrink the exe
-  to <100 MB.
+- **Excluded heavy deps.** The 13 `--exclude-module` flags above already
+  trim the exe from 237 MB to ~106 MB. Pushing further (excluding `numpy`,
+  `lxml`, `cryptography`, `tkinter`) is risky — at least one of openpyxl /
+  pymupdf / Flet's runtime imports them. Test before adding more.
 - **Dev path unchanged.** `python -m accounting.ui.app` still works for
   development; the frozen-vs-source path branch in `accounting/extractor.py`
   picks the right `_REPO_ROOT` automatically.
