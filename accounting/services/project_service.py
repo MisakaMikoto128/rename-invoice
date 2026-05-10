@@ -22,17 +22,50 @@ def create_project(conn: sqlite3.Connection, name: str,
 
 
 def get_project(conn: sqlite3.Connection, project_id: int) -> Optional[Project]:
+    """Return an active (non-trashed) project by id, or None."""
     row = conn.execute(
-        "SELECT * FROM project WHERE id = ?", (project_id,)
+        "SELECT * FROM project WHERE id = ? AND deleted_at IS NULL",
+        (project_id,),
     ).fetchone()
     return Project.from_row(row) if row else None
 
 
 def list_projects(conn: sqlite3.Connection) -> List[Project]:
+    """List active (non-trashed) projects, newest first."""
     rows = conn.execute(
-        "SELECT * FROM project ORDER BY created_at DESC, id DESC"
+        "SELECT * FROM project WHERE deleted_at IS NULL "
+        "ORDER BY created_at DESC, id DESC"
     ).fetchall()
     return [Project.from_row(r) for r in rows]
+
+
+def list_trashed_projects(conn: sqlite3.Connection) -> List[Project]:
+    """List soft-deleted (trashed) projects, most-recently-trashed first."""
+    rows = conn.execute(
+        "SELECT * FROM project WHERE deleted_at IS NOT NULL "
+        "ORDER BY deleted_at DESC, id DESC"
+    ).fetchall()
+    return [Project.from_row(r) for r in rows]
+
+
+def trash_project(conn: sqlite3.Connection, project_id: int) -> None:
+    """Soft-delete: mark project as trashed (recoverable via restore_project)."""
+    conn.execute(
+        "UPDATE project SET deleted_at = CURRENT_TIMESTAMP, "
+        "updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+        (project_id,),
+    )
+    conn.commit()
+
+
+def restore_project(conn: sqlite3.Connection, project_id: int) -> None:
+    """Restore a trashed project (clear deleted_at)."""
+    conn.execute(
+        "UPDATE project SET deleted_at = NULL, "
+        "updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+        (project_id,),
+    )
+    conn.commit()
 
 
 def update_project_status(conn: sqlite3.Connection, project_id: int,

@@ -15,9 +15,16 @@ class Project:
     note: Optional[str] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
+    deleted_at: Optional[str] = None
 
     @classmethod
     def from_row(cls, row: Mapping[str, Any]) -> "Project":
+        # row may be a sqlite3.Row or a plain dict; both expose .keys().
+        # Older v1 rows (pre-trash migration) won't have a deleted_at key.
+        try:
+            has_deleted = "deleted_at" in row.keys()
+        except Exception:
+            has_deleted = False
         return cls(
             id=row["id"],
             name=row["name"],
@@ -26,6 +33,7 @@ class Project:
             note=row["note"],
             created_at=row["created_at"],
             updated_at=row["updated_at"],
+            deleted_at=row["deleted_at"] if has_deleted else None,
         )
 
 

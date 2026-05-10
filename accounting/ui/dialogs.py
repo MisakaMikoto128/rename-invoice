@@ -60,6 +60,55 @@ def show_rename_project_dialog(page: ft.Page, current_name: str,
     page.show_dialog(dialog)
 
 
+def show_settings_dialog(page: ft.Page, current_root: str, project_count: int,
+                         on_migrate: Callable[[], None]) -> None:
+    """Show a settings dialog. on_migrate is called when user clicks 迁移."""
+    from accounting import settings as _settings
+
+    current_theme = _settings.get(_settings.KEY_THEME_MODE, "light")
+    theme_switch = ft.Switch(label="黑暗模式",
+                             value=(current_theme == "dark"))
+
+    def on_theme_change(_e):
+        new_theme = "dark" if theme_switch.value else "light"
+        _settings.set_value(_settings.KEY_THEME_MODE, new_theme)
+        page.theme_mode = (ft.ThemeMode.DARK if new_theme == "dark"
+                           else ft.ThemeMode.LIGHT)
+        page.update()
+
+    theme_switch.on_change = on_theme_change
+
+    def trigger_migrate(_e):
+        page.pop_dialog()
+        on_migrate()
+
+    dialog = ft.AlertDialog(
+        title=ft.Text("设置"),
+        content=ft.Column([
+            ft.Text("外观", weight=ft.FontWeight.BOLD),
+            theme_switch,
+            ft.Container(height=12),
+            ft.Text("项目存储根目录", weight=ft.FontWeight.BOLD),
+            ft.Text(current_root, size=12, color=ft.Colors.OUTLINE,
+                    selectable=True),
+            ft.Container(height=8),
+            ft.Text(f"{project_count} 个项目", size=12,
+                    color=ft.Colors.OUTLINE),
+            ft.Container(height=12),
+            ft.Text("迁移会把上面这个根目录下的所有项目文件夹整体移到新位置, "
+                    "并更新数据库里的路径。数据库本身和设置文件保持在 "
+                    "%APPDATA%\\rename-invoice\\ 不变。",
+                    size=11, color=ft.Colors.OUTLINE),
+        ], tight=True, height=270, width=480),
+        actions=[
+            ft.TextButton("关闭", on_click=lambda _e: page.pop_dialog()),
+            ft.ElevatedButton("迁移到新位置...", icon=ft.Icons.DRIVE_FILE_MOVE,
+                              on_click=trigger_migrate),
+        ],
+    )
+    page.show_dialog(dialog)
+
+
 def show_new_project_dialog(page: ft.Page,
                              on_confirm: Callable[[str], None]) -> None:
     name_field = ft.TextField(label="项目名", autofocus=True)

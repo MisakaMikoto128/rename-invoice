@@ -10,7 +10,7 @@
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python 3.8+">
   <img src="https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey.svg" alt="Platform: Windows">
-  <a href="./CHANGELOG.md"><img src="https://img.shields.io/badge/version-0.5.1-green.svg" alt="Version 0.5.1"></a>
+  <a href="./CHANGELOG.md"><img src="https://img.shields.io/badge/version-0.5.2-green.svg" alt="Version 0.5.2"></a>
 </p>
 
 把中国大陆增值税电子发票 PDF 重命名成 `{价税合计}元-{原文件名}.pdf`，方便报销时一眼看到金额。

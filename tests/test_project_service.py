@@ -83,3 +83,29 @@ def test_set_project_status_cascade_invalid_raises(conn):
     p = ps.create_project(conn, name="P", folder_path="C:/cascade2")
     with pytest.raises(ValueError):
         ps.set_project_status_cascade(conn, p.id, "胡说")
+
+
+def test_trash_and_restore_project(conn):
+    p = ps.create_project(conn, name="T", folder_path="C:/trash1")
+    ps.trash_project(conn, p.id)
+    # Hidden from list_projects
+    assert p.id not in [pp.id for pp in ps.list_projects(conn)]
+    # Hidden from get_project
+    assert ps.get_project(conn, p.id) is None
+    # Visible in list_trashed_projects
+    trashed = ps.list_trashed_projects(conn)
+    assert len(trashed) == 1
+    assert trashed[0].id == p.id
+    assert trashed[0].deleted_at is not None
+    # Restore
+    ps.restore_project(conn, p.id)
+    assert ps.get_project(conn, p.id) is not None
+    assert ps.list_trashed_projects(conn) == []
+
+
+def test_purge_trashed_project_via_delete_project(conn):
+    p = ps.create_project(conn, name="P", folder_path="C:/purge1")
+    ps.trash_project(conn, p.id)
+    ps.delete_project(conn, p.id)  # hard delete
+    assert ps.list_trashed_projects(conn) == []
+    assert ps.get_project(conn, p.id) is None
