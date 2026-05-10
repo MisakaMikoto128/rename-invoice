@@ -331,15 +331,29 @@ def build_project_view(page: ft.Page, state: AppState,
     pdf_count_text = ft.Text(f"PDF ({len(invoices)})", size=14,
                              weight=ft.FontWeight.W_500)
 
+    def open_pdf(invoice):
+        pdf_path = Path(p.folder_path) / invoice.file_name
+        if not pdf_path.exists():
+            page.show_dialog(ft.SnackBar(
+                content=ft.Text(f"文件不存在: {pdf_path}")))
+            return
+        try:
+            os.startfile(str(pdf_path))
+        except Exception as ex:
+            page.show_dialog(ft.SnackBar(
+                content=ft.Text(f"打开失败: {ex}")))
+
     def build_pdf_items(invoices_list):
         items = []
         for inv in invoices_list:
+            # default-arg trick (`inv=inv`) avoids late-binding bug — without
+            # it every row's handler would close over the loop's final inv.
             items.append(ft.ListTile(
                 leading=ft.Icon(ft.Icons.PICTURE_AS_PDF, color=ft.Colors.RED_400),
                 title=ft.Text(inv.file_name, size=12, no_wrap=True,
                               overflow=ft.TextOverflow.ELLIPSIS),
                 dense=True,
-                on_click=lambda _e, iid=inv.id: print(f"TODO highlight row for {iid}"),
+                on_click=lambda _e, inv=inv: open_pdf(inv),
             ))
         return items
 
