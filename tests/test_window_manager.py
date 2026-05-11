@@ -1,0 +1,95 @@
+from unittest.mock import MagicMock, patch
+import pytest
+
+from accounting import window_manager, settings
+
+
+@pytest.fixture
+def mock_page():
+    """A page mock with the window attributes WindowManager touches."""
+    p = MagicMock()
+    p.window.visible = True
+    p.window.skip_task_bar = False
+    return p
+
+
+@pytest.fixture(autouse=True)
+def _isolate_settings(tmp_path, monkeypatch):
+    monkeypatch.setattr(settings, "_settings_path",
+                         lambda: tmp_path / "settings.json")
+
+
+def test_hide_to_tray_sets_invisible_and_skip_taskbar(mock_page):
+    wm = window_manager.WindowManager(mock_page, on_real_quit=MagicMock())
+    wm.hide_to_tray()
+    assert mock_page.window.visible is False
+    assert mock_page.window.skip_task_bar is True
+    mock_page.update.assert_called()
+
+
+def test_show_from_tray_sets_visible_and_brings_to_front(mock_page):
+    wm = window_manager.WindowManager(mock_page, on_real_quit=MagicMock())
+    mock_page.window.visible = False
+    mock_page.window.skip_task_bar = True
+    wm.show_from_tray()
+    assert mock_page.window.visible is True
+    assert mock_page.window.skip_task_bar is False
+    mock_page.window.to_front.assert_called_once()
+
+
+def test_quit_calls_cleanup_then_destroys_window(mock_page):
+    cleanup = MagicMock()
+    wm = window_manager.WindowManager(mock_page, on_real_quit=cleanup)
+    wm.quit()
+    cleanup.assert_called_once()
+    mock_page.window.destroy.assert_called_once()
+
+
+def test_quit_is_idempotent(mock_page):
+    cleanup = MagicMock()
+    wm = window_manager.WindowManager(mock_page, on_real_quit=cleanup)
+    wm.quit()
+    wm.quit()
+    cleanup.assert_called_once()
+    assert mock_page.window.destroy.call_count == 1
+
+
+def test_handle_close_action_hide_hides_without_dialog(mock_page):
+    settings.set_value(settings.KEY_CLOSE_ACTION, "hide")
+    wm = window_manager.WindowManager(mock_page, on_real_quit=MagicMock())
+    wm._handle_close()
+    assert mock_page.window.visible is False
+
+
+def test_handle_close_action_exit_quits_without_dialog(mock_page):
+    settings.set_value(settings.KEY_CLOSE_ACTION, "exit")
+    cleanup = MagicMock()
+    wm = window_manager.WindowManager(mock_page, on_real_quit=cleanup)
+    wm._handle_close()
+    cleanup.assert_called_once()
+
+
+def test_handle_close_action_ask_shows_dialog(mock_page, monkeypatch):
+    settings.set_value(settings.KEY_CLOSE_ACTION, "ask")
+    spy = MagicMock()
+    monkeypatch.setattr(window_manager, "show_close_confirm_dialog", spy)
+    wm = window_manager.WindowManager(mock_page, on_real_quit=MagicMock())
+    wm._handle_close()
+    spy.assert_called_once()
+
+
+def test_on_window_event_minimize_hides_to_tray(mock_page):
+    wm = window_manager.WindowManager(mock_page, on_real_quit=MagicMock())
+    evt = MagicMock(); evt.data = "minimize"
+    wm.on_window_event(evt)
+    assert mock_page.window.visible is False
+    assert mock_page.window.skip_task_bar is True
+
+
+def test_on_window_event_close_routes_to_handle_close(mock_page):
+    settings.set_value(settings.KEY_CLOSE_ACTION, "exit")
+    cleanup = MagicMock()
+    wm = window_manager.WindowManager(mock_page, on_real_quit=cleanup)
+    evt = MagicMock(); evt.data = "close"
+    wm.on_window_event(evt)
+    cleanup.assert_called_once()
