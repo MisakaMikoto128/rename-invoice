@@ -1,14 +1,26 @@
 """Flet entry. Routes between main_view and project_view."""
+import socket
+import sys
+from typing import Optional
+
 import flet as ft
 
-from accounting import db, settings
+from accounting import db, settings, single_instance
+from accounting.tray import TrayController
 from accounting.ui.main_view import build_main_view
 from accounting.ui.project_view import build_project_view
 from accounting.ui.state import AppState
+from accounting.window_manager import WindowManager
+
+
+# Wired up in __main__ block; main() reads them via module globals.
+_LISTENER_SOCK: Optional[socket.socket] = None
+_SILENT_FLAG: bool = False
 
 
 def main(page: ft.Page):
     page.title = "rename-invoice / 账目管理"
+    page.window.prevent_close = True  # required; otherwise the X kills the window directly
     # Defaults — overridden below if user has saved window state.
     page.window.width = 1200
     page.window.height = 720
@@ -61,13 +73,59 @@ def main(page: ft.Page):
         except Exception:
             pass
 
-    def on_close(_e):
+    tray: Optional[TrayController] = None  # forward decl for cleanup() closure
+
+    def cleanup():
         save_window_state()
         state.close()
+        if tray is not None:
+            tray.stop()
 
-    page.on_close = on_close
+    wm = WindowManager(page, on_real_quit=cleanup)
 
     container = ft.Container(expand=True)
+
+    # ---- Tray wiring ----
+    # Tray callbacks run on the pystray daemon thread; from_tray() marshals
+    # each callback back to the Flet main thread via page.run_thread.
+    def from_tray(fn):
+        return lambda: page.run_thread(fn)
+
+    def tray_show():
+        wm.show_from_tray()
+
+    def tray_settings():
+        wm.show_from_tray()
+        _open_settings_holder["fn"]()  # filled in by render_main below
+
+    def tray_about():
+        from accounting.ui.dialogs import show_about_dialog
+        wm.show_from_tray()
+        show_about_dialog(page)
+
+    def tray_quit():
+        wm.quit()
+
+    # The 'tray' name is referenced by cleanup() above; rebind it here.
+    tray = TrayController(
+        on_show=from_tray(tray_show),
+        on_settings=from_tray(tray_settings),
+        on_about=from_tray(tray_about),
+        on_quit=from_tray(tray_quit),
+    )
+    tray.start()
+
+    # ---- Single-instance listener (only if we hold the socket lock) ----
+    if _LISTENER_SOCK is not None:
+        single_instance.serve_show_requests(
+            _LISTENER_SOCK,
+            on_show=from_tray(wm.show_from_tray),
+        )
+
+    page.window.on_event = wm.on_window_event
+
+    # Forward holder so tray "设置" can invoke render_main's local open_settings.
+    _open_settings_holder = {"fn": lambda: None}
 
     def render_main():
         state.select_project(None)
@@ -150,6 +208,9 @@ def main(page: ft.Page):
                                   project_count=count,
                                   on_migrate=trigger_migrate)
 
+        # Expose to tray callback (which lives in a wider scope).
+        _open_settings_holder["fn"] = open_settings
+
         def open_invoice_in_project(project_id, file_name):
             # Pre-fill the in-project search filter so the table shows just
             # this row. render_project does NOT reset state.search_query, so
@@ -197,8 +258,14 @@ def main(page: ft.Page):
         page.update()
 
     page.add(container)
+    if _SILENT_FLAG:
+        wm.hide_to_tray()
     render_main()
 
 
 if __name__ == "__main__":
+    _SILENT_FLAG = "--silent" in sys.argv
+    _LISTENER_SOCK = single_instance.acquire_or_signal_existing()
+    if _LISTENER_SOCK is None:
+        sys.exit(0)  # another instance is already running, we've signaled it
     ft.run(main)
