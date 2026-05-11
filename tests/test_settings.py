@@ -41,3 +41,11 @@ def test_corrupt_file_returns_empty(tmp_path, monkeypatch):
     bad.write_text("not json", encoding="utf-8")
     monkeypatch.setattr(settings, "_settings_path", lambda: bad)
     assert settings.get("anything") is None
+
+
+def test_close_action_default_is_ask():
+    assert settings.get(settings.KEY_CLOSE_ACTION, "ask") == "ask"
+
+
+def test_autostart_enabled_default_is_off():
+    assert settings.get(settings.KEY_AUTOSTART_ENABLED, "0") == "0"
