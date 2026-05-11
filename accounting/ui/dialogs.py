@@ -313,7 +313,7 @@ def show_about_dialog(page: ft.Page, version: str = "1.0.2") -> None:
     ], tight=True, width=400, height=140)
 
     dialog = ft.AlertDialog(
-        title=ft.Text("关于"),
+        title=ft.Text("关于 AccountManager"),
         content=content,
         actions=[
             ft.TextButton("关闭", on_click=lambda _e: page.pop_dialog()),

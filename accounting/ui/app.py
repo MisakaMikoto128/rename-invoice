@@ -80,6 +80,11 @@ def main(page: ft.Page):
         state.close()
         if tray is not None:
             tray.stop()
+        if _LISTENER_SOCK is not None:
+            try:
+                _LISTENER_SOCK.close()
+            except OSError:
+                pass
 
     wm = WindowManager(page, on_real_quit=cleanup)
 
