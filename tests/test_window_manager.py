@@ -34,7 +34,8 @@ def test_show_from_tray_sets_visible_and_brings_to_front(mock_page):
     wm.show_from_tray()
     assert mock_page.window.visible is True
     assert mock_page.window.skip_task_bar is False
-    mock_page.window.to_front.assert_called_once()
+    # to_front() is async in Flet 0.85; we schedule it via page.run_task.
+    mock_page.run_task.assert_any_call(mock_page.window.to_front)
 
 
 def test_quit_calls_cleanup_then_destroys_window(mock_page):
@@ -42,7 +43,8 @@ def test_quit_calls_cleanup_then_destroys_window(mock_page):
     wm = window_manager.WindowManager(mock_page, on_real_quit=cleanup)
     wm.quit()
     cleanup.assert_called_once()
-    mock_page.window.destroy.assert_called_once()
+    # destroy() is async; verify it's scheduled via run_task, not called sync.
+    mock_page.run_task.assert_any_call(mock_page.window.destroy)
 
 
 def test_quit_is_idempotent(mock_page):
@@ -51,7 +53,10 @@ def test_quit_is_idempotent(mock_page):
     wm.quit()
     wm.quit()
     cleanup.assert_called_once()
-    assert mock_page.window.destroy.call_count == 1
+    # destroy scheduled exactly once across two quit() calls
+    destroy_calls = [c for c in mock_page.run_task.call_args_list
+                      if c.args == (mock_page.window.destroy,)]
+    assert len(destroy_calls) == 1
 
 
 def test_handle_close_action_hide_hides_without_dialog(mock_page):

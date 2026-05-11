@@ -26,7 +26,8 @@ class WindowManager:
             return
         self.page.window.skip_task_bar = False
         self.page.window.visible = True
-        self.page.window.to_front()
+        # Flet 0.85: window.to_front() is async; schedule it on the loop.
+        self.page.run_task(self.page.window.to_front)
         self.page.update()
 
     def quit(self) -> None:
@@ -34,7 +35,10 @@ class WindowManager:
             return
         self._closing = True
         self.on_real_quit()
-        self.page.window.destroy()
+        # Flet 0.85: window.destroy() is async — calling it synchronously
+        # returns an unawaited coroutine and the window never actually closes.
+        # Schedule it on the event loop instead.
+        self.page.run_task(self.page.window.destroy)
 
     def on_window_event(self, e) -> None:
         if e.data == "minimize":
