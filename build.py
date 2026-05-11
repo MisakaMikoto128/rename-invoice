@@ -6,7 +6,7 @@ Usage:
     python build.py        # or: .\\build.bat
 
 Output:
-    release/v<version>/AccountManager.exe   (~75 MB, single-file)
+    release/v<version>/AccountManager.exe   (~80 MB, single-file)
 
 Prereqs (one-time):
     pip install -r requirements.txt
@@ -38,7 +38,7 @@ RELEASE    = SCRIPT_DIR / "release"
 APP_NAME = "AccountManager"
 APP_DESC = "Account Manager - rename-invoice GUI"
 
-# ~75 MB after these 29 excludes; without them the bundle is ~237 MB.
+# ~80 MB after these 29 excludes; without them the bundle is ~242 MB.
 # Each entry is a top-level package PyInstaller would otherwise pull in
 # transitively from the dev site-packages but our app never imports.
 # v1.0.0 baseline (13) + v1.0.1 additions (15). All proven safe by smoke
@@ -154,6 +154,10 @@ def build() -> None:
         "--hidden-import", "openpyxl",
         "--product-name", APP_NAME,
         "--file-description", APP_DESC,
+        "--add-data", f"{SCRIPT_DIR / 'assets' / 'icon-256.png'};assets",
+        "--hidden-import", "pystray._win32",
+        "--hidden-import", "PIL.Image",
+        "--hidden-import", "PIL.ImageDraw",
         "-y",
     ]
     cmd += [f"--pyinstaller-build-args=--exclude-module={m}" for m in EXCLUDES]

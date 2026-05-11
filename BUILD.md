@@ -11,7 +11,7 @@ End users get a single `.exe` they double-click; no Python install required.
 python build.py
 ```
 
-Output: `release\v<version>\AccountManager.exe` (~75 MB, single-file).
+Output: `release\v<version>\AccountManager.exe` (~80 MB, single-file).
 
 ## Prerequisites
 
@@ -30,7 +30,7 @@ Already installed in the dev environment:
    - `--name AccountManager` / `--icon assets/icon.ico`
    - `--add-data "rename_invoice.py;."` — bundles the CLI module
    - `--hidden-import rename_invoice fitz openpyxl`
-   - 28 `--pyinstaller-build-args=--exclude-module=...` flags trimming the bundle from ~237 MB to ~75 MB
+   - 29 `--pyinstaller-build-args=--exclude-module=...` flags trimming the bundle from ~242 MB to ~80 MB
 4. Copies `dist\AccountManager.exe` → `release\v<version>\AccountManager.exe`.
 5. (Optional) self-signs via `signtool` if it's on PATH or the Win 10 SDK is installed; auto-generates a self-signed cert (`build_sign.pfx`) on first run.
 
@@ -66,6 +66,22 @@ A onefile PyInstaller exe needs ~5-8 s to unpack into `%TEMP%\_MEIxxxxx`, then F
 
 **Caveat.** Don't pass `-RedirectStandardOutput` / `-RedirectStandardError` to `Start-Process` — PyInstaller built the bundle with `--noconsole`, so the parent process re-execs into a windowed Flet child and the redirected-stdio parent exits within seconds, making `$alive` look `False` even when the GUI is fine.
 
+### Tray / autostart / close-confirm smoke checklist
+
+Run after each new build (v1.0.2+):
+
+1. 双击 exe → 主窗出现 + 托盘有图标 ✓
+2. 点 ─ → 主窗消失,任务栏按钮消失,托盘仍在 ✓
+3. 左键托盘图标 → 主窗弹回 ✓
+4. 点 ✕ → 弹「关闭确认」对话框 ✓
+5. 选「隐藏到托盘」+ 不勾「记住」→ 隐藏;下次再点 ✕ 还弹 ✓
+6. 选「退出」+ 勾「记住」→ 进程退出;重启 exe 后再点 ✕ 直接退出 ✓
+7. 设置 → 关闭时改回「询问」→ 下次点 ✕ 又弹对话框 ✓
+8. 设置 → 开机启动 ON → 任务管理器「启动应用」可见 AccountManager ✓
+9. 已在托盘运行时双击 exe → 主窗弹出,无第二个进程
+   验证: `Get-Process AccountManager` 只一个 ✓
+10. 设置 → 开机启动 OFF → 任务管理器「启动应用」AccountManager 消失 ✓
+
 ## Known caveats
 
 - **Antivirus.** A freshly-built PyInstaller bootloader is sometimes flagged by Windows Defender / SmartScreen. Code-signing fixes this; we use a self-signed cert which helps with SmartScreen but doesn't beat AV reputation. A real Authenticode cert would be the eventual fix.
@@ -81,7 +97,7 @@ PyInstaller with the exclude list above:
 | | PyInstaller | Nuitka (attempted) |
 |---|---|---|
 | Build time | ~30 s | 2+ hr (hung) |
-| Final size | ~75 MB | unknown — never finished |
+| Final size | ~80 MB | unknown — never finished |
 | Reverse-engineering | Easy (.pyc) | Harder (compiled) |
 | AV false positives | Sometimes | Rare |
 
