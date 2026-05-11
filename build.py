@@ -17,7 +17,7 @@ Why PyInstaller over Nuitka:
     analysis on PyMuPDF's SWIG-generated bindings (`pymupdf.mupdf`) for
     hours, even with module-include flags trimmed and `--lto=yes` dropped.
     PyInstaller with the exclude list below builds in ~30 s and produces
-    a 75 MB exe -- close enough to Nuitka's projected size that the
+    an ~80 MB exe -- close enough to Nuitka's projected size that the
     build-time cost isn't worth it.
 """
 from __future__ import annotations
