@@ -111,7 +111,7 @@ def show_settings_dialog(page: ft.Page, current_root: str, project_count: int,
             )
         except OSError as ex:
             autostart_switch.value = not autostart_switch.value
-            page.show_dialog(ft.SnackBar(
+            page.open(ft.SnackBar(
                 content=ft.Text(f"开机启动设置失败: {ex}")))
             page.update()
 
