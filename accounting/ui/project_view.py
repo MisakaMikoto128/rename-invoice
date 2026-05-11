@@ -430,20 +430,24 @@ def build_project_view(page: ft.Page, state: AppState,
         return (not (inv.remark and inv.remark.strip()) or
                 not (inv.taobao_order and inv.taobao_order.strip()))
 
+    # Column order is tuned for daily use: the four hot-fields the user
+    # edits or scans every session (备注/淘宝单号/金额/状态) come first;
+    # the identifier columns (文件/发票号/日期/销售方) sit after them and
+    # rarely need to be visible at once.
     def build_rows(invoices_list):
         rows = []
         for inv in invoices_list:
             cells = [
+                ft.DataCell(make_field_cell(inv.id, "remark", inv.remark)),
+                ft.DataCell(make_field_cell(inv.id, "taobao_order", inv.taobao_order)),
+                ft.DataCell(make_amount_cell(inv.id, inv.amount)),
+                ft.DataCell(make_status_dd(inv.id, inv.status)),
                 ft.DataCell(ft.Text(inv.file_name, no_wrap=True,
                                     overflow=ft.TextOverflow.ELLIPSIS,
                                     tooltip=inv.file_name)),
                 ft.DataCell(make_field_cell(inv.id, "invoice_no", inv.invoice_no)),
                 ft.DataCell(make_field_cell(inv.id, "invoice_date", inv.invoice_date)),
                 ft.DataCell(make_field_cell(inv.id, "seller", inv.seller)),
-                ft.DataCell(make_field_cell(inv.id, "remark", inv.remark)),
-                ft.DataCell(make_field_cell(inv.id, "taobao_order", inv.taobao_order)),
-                ft.DataCell(make_amount_cell(inv.id, inv.amount)),
-                ft.DataCell(make_status_dd(inv.id, inv.status)),
                 ft.DataCell(ft.IconButton(
                     icon=ft.Icons.DELETE_OUTLINE,
                     icon_size=18,
@@ -458,14 +462,14 @@ def build_project_view(page: ft.Page, state: AppState,
 
     table = ft.DataTable(
         columns=[
-            ft.DataColumn(ft.Text("文件")),
-            ft.DataColumn(ft.Text("发票号")),
-            ft.DataColumn(ft.Text("日期")),
-            ft.DataColumn(ft.Text("销售方")),
             ft.DataColumn(ft.Text("备注")),
             ft.DataColumn(ft.Text("淘宝单号")),
             ft.DataColumn(ft.Text("金额"), numeric=True),
             ft.DataColumn(ft.Text("状态")),
+            ft.DataColumn(ft.Text("文件")),
+            ft.DataColumn(ft.Text("发票号")),
+            ft.DataColumn(ft.Text("日期")),
+            ft.DataColumn(ft.Text("销售方")),
             ft.DataColumn(ft.Text("")),
         ],
         rows=build_rows(invoices),
