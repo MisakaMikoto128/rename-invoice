@@ -607,7 +607,9 @@ def build_project_view(page: ft.Page, state: AppState,
     table_pane = ft.Container(
         content=ft.Column([
             ft.Container(
-                content=ft.Row([table], scroll=ft.ScrollMode.AUTO),
+                # ScrollMode.ALWAYS keeps the horizontal scrollbar visible so
+                # users don't miss that the 9-col table can be scrolled.
+                content=ft.Row([table], scroll=ft.ScrollMode.ALWAYS),
                 expand=True,
             ),
             ft.Container(
