@@ -17,18 +17,27 @@ class WindowManager:
         self._closing = False
 
     def hide_to_tray(self) -> None:
-        self.page.window.visible = False
+        # Idempotent — also prevents recursion when on_window_event(minimize)
+        # routes back here after we set minimized=True programmatically.
+        if self.page.window.skip_task_bar:
+            return
+        # Flet 0.85: window.visible is a startup-only flag (per its docstring).
+        # The runtime-toggleable property is `minimized`; combined with
+        # `skip_task_bar` it gives the desired "only tray icon left" UX.
+        # page.window.update() is required to push window-level changes
+        # (page.update() doesn't propagate to window properties in 0.85).
         self.page.window.skip_task_bar = True
-        self.page.update()
+        self.page.window.minimized = True
+        self.page.window.update()
 
     def show_from_tray(self) -> None:
         if self._closing:
             return
         self.page.window.skip_task_bar = False
-        self.page.window.visible = True
+        self.page.window.minimized = False
         # Flet 0.85: window.to_front() is async; schedule it on the loop.
         self.page.run_task(self.page.window.to_front)
-        self.page.update()
+        self.page.window.update()
 
     def quit(self) -> None:
         if self._closing:
