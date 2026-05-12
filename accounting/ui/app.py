@@ -18,19 +18,23 @@ def main(page: ft.Page):
     page.padding = 0
 
     # Restore window size + position from saved settings (best-effort).
+    # Sanity-check geometry: reject sizes < 400x300 (minimized garbage) and
+    # off-screen positions (< -1000). Windows records minimized windows at
+    # ~(-32000, -32000) with tiny sizes; if that ever got persisted (e.g. by
+    # an old tray build), it would leave the next launch invisible.
     try:
         w = settings.get(settings.KEY_WINDOW_WIDTH)
         h = settings.get(settings.KEY_WINDOW_HEIGHT)
         left = settings.get(settings.KEY_WINDOW_LEFT)
         top = settings.get(settings.KEY_WINDOW_TOP)
         maxi = settings.get(settings.KEY_WINDOW_MAXIMIZED)
-        if w:
+        if w and float(w) >= 400:
             page.window.width = float(w)
-        if h:
+        if h and float(h) >= 300:
             page.window.height = float(h)
-        if left is not None:
+        if left is not None and float(left) > -1000:
             page.window.left = float(left)
-        if top is not None:
+        if top is not None and float(top) > -1000:
             page.window.top = float(top)
         if maxi == "1":
             page.window.maximized = True
@@ -41,19 +45,26 @@ def main(page: ft.Page):
     state.init()
 
     def save_window_state():
+        # Skip saving if window appears minimized or in some other broken state
+        # (tiny size or off-screen position). Otherwise we'd persist garbage
+        # that makes the next launch invisible.
         try:
-            if page.window.width:
-                settings.set_value(settings.KEY_WINDOW_WIDTH,
-                                   str(page.window.width))
-            if page.window.height:
-                settings.set_value(settings.KEY_WINDOW_HEIGHT,
-                                   str(page.window.height))
-            if page.window.left is not None:
-                settings.set_value(settings.KEY_WINDOW_LEFT,
-                                   str(page.window.left))
-            if page.window.top is not None:
-                settings.set_value(settings.KEY_WINDOW_TOP,
-                                   str(page.window.top))
+            w = page.window.width or 0
+            h = page.window.height or 0
+            left = page.window.left
+            top = page.window.top
+            if w < 400 or h < 300:
+                return
+            if left is not None and left < -1000:
+                return
+            if top is not None and top < -1000:
+                return
+            settings.set_value(settings.KEY_WINDOW_WIDTH, str(w))
+            settings.set_value(settings.KEY_WINDOW_HEIGHT, str(h))
+            if left is not None:
+                settings.set_value(settings.KEY_WINDOW_LEFT, str(left))
+            if top is not None:
+                settings.set_value(settings.KEY_WINDOW_TOP, str(top))
             settings.set_value(
                 settings.KEY_WINDOW_MAXIMIZED,
                 "1" if page.window.maximized else "0",

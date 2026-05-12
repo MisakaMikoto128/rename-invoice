@@ -29,13 +29,17 @@ def is_enabled() -> bool:
 
 
 def enable(exe_path: Path) -> None:
-    """Write the Run-key entry. Value = quoted exe path + ' --silent'.
+    """Write the Run-key entry. Value = quoted exe path.
 
     Raises OSError on permission failure (caller surfaces a UI error).
+    Refuses to write if exe_path doesn't point to an .exe (dev mode would
+    otherwise write the python interpreter path).
     """
     if winreg is None:
         raise OSError("autostart is only supported on Windows")
-    value = f'"{exe_path}" --silent'
+    if exe_path.suffix.lower() != ".exe" or "python" in exe_path.name.lower():
+        raise OSError("开机启动仅在打包版 AccountManager.exe 中可用")
+    value = f'"{exe_path}"'
     with winreg.CreateKey(winreg.HKEY_CURRENT_USER, RUN_KEY) as key:
         winreg.SetValueEx(key, APP_NAME, 0, winreg.REG_SZ, value)
 

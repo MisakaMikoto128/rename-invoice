@@ -26,14 +26,26 @@ def fake_winreg(monkeypatch):
     return m
 
 
-def test_enable_writes_exe_path_with_silent_flag(fake_winreg):
+def test_enable_writes_quoted_exe_path(fake_winreg):
     autostart.enable(Path(r"C:\Apps\AccountManager.exe"))
     fake_winreg.SetValueEx.assert_called_once()
     args, _ = fake_winreg.SetValueEx.call_args
     # SetValueEx(key, value_name, reserved, type, value)
     assert args[1] == autostart.APP_NAME
     assert args[3] == fake_winreg.REG_SZ
-    assert args[4] == r'"C:\Apps\AccountManager.exe" --silent'
+    assert args[4] == r'"C:\Apps\AccountManager.exe"'
+
+
+def test_enable_rejects_python_interpreter_path(fake_winreg):
+    with pytest.raises(OSError):
+        autostart.enable(Path(r"C:\Python311\python.exe"))
+    fake_winreg.SetValueEx.assert_not_called()
+
+
+def test_enable_rejects_non_exe(fake_winreg):
+    with pytest.raises(OSError):
+        autostart.enable(Path(r"C:\Apps\AccountManager.bat"))
+    fake_winreg.SetValueEx.assert_not_called()
 
 
 def test_disable_calls_delete_value(fake_winreg):
@@ -50,7 +62,7 @@ def test_disable_swallows_missing_value_error(fake_winreg):
 
 
 def test_is_enabled_true_when_value_exists(fake_winreg):
-    fake_winreg.QueryValueEx.return_value = (r'"X" --silent', 1)
+    fake_winreg.QueryValueEx.return_value = (r'"X"', 1)
     assert autostart.is_enabled() is True
 
 

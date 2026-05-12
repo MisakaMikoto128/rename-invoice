@@ -145,7 +145,26 @@ elif e.data == "close": ...
 
 **修复**: `kind = getattr(getattr(e, "type", None), "value", None) or getattr(e, "data", None)`。
 
-### 9. 真正解决了 #8 之后, 仍然撤回, 因为信任已经崩了
+### 9. 撤回之后的尾巴: 残留的窗口几何 + 注册表项
+
+撤回 tray 代码之后, 用户回报"主窗口仍然不显示"。代码层已经清干净, 实际是**数据残留**:
+
+1. `%APPDATA%\rename-invoice\settings.json` 里被上一轮的 `minimized=True` 测试污染:
+   ```json
+   "window_width":  "157.0",
+   "window_height": "35.5",
+   "window_left":   "-16000.0",   ← 屏幕外
+   "window_top":    "-16000.0"
+   ```
+   `(-32000, -32000)` 是 Windows 给最小化窗口记录的位置 (DPI scale 后变成 -16000)。每次启动 `app.py` 读这些值, 把窗口放到屏幕外 —— 看起来"主窗口不显示", 其实是被放到看不见的地方。
+
+2. 注册表 `HKCU\...\Run\AccountManager` 里残留 `python.exe --silent` —— 因为 `autostart.enable()` 在 dev mode 下取 `sys.executable`, 写入的是 Python 解释器, 不是 AccountManager.exe。重启电脑触发这条 Run 项, python.exe 不认 `--silent`, 直接退出, 看似"开机启动失效"。
+
+**修复**: 在 `app.py` 加几何 sanity check (拒绝 < 400x300 或 left/top < -1000), 在 `save_window_state()` 加同样的防御 (异常状态不存); `autostart.enable()` 拒绝非 .exe 或 python.exe 路径。
+
+**教训**: 撤回失败特性时, 不光要回退**代码**, 还要清理那段代码留下的**状态** (settings.json, 注册表, 缓存等)。代码是无状态的, 这些副作用却是持久的。
+
+### 10. 真正解决了 #8 之后, 仍然撤回, 因为信任已经崩了
 
 修复 `e.type` 之后, 理论上整套应该能跑。但用户已经被反复"修好了 → 又坏了"折磨多轮, 决定撤回。
 
