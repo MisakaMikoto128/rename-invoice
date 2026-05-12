@@ -91,10 +91,14 @@ def main(page: ft.Page):
     container = ft.Container(expand=True)
 
     # ---- Tray wiring ----
-    # Tray callbacks run on the pystray daemon thread; from_tray() marshals
-    # each callback back to the Flet main thread via page.run_thread.
+    # Tray callbacks run on the pystray daemon thread. page.run_thread()
+    # would dispatch to Flet's executor thread pool — wrong for us, because
+    # the sqlite connection and Flet UI live on the main event-loop thread.
+    # page.run_task() with an async wrapper marshals onto the loop instead.
     def from_tray(fn):
-        return lambda: page.run_thread(fn)
+        async def _wrap():
+            fn()
+        return lambda: page.run_task(_wrap)
 
     def tray_show():
         wm.show_from_tray()
