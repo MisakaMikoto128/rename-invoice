@@ -33,11 +33,17 @@ class WindowManager:
     def show_from_tray(self) -> None:
         if self._closing:
             return
+        # Restore in two flushes: re-add the taskbar entry first so the OS
+        # has a target to restore to, THEN un-minimize. Sending both in one
+        # update() leaves the window stuck minimized (observed on Flet 0.85
+        # / Windows 11).
         self.page.window.skip_task_bar = False
-        self.page.window.minimized = False
-        # Flet 0.85: window.to_front() is async; schedule it on the loop.
-        self.page.run_task(self.page.window.to_front)
         self.page.window.update()
+        self.page.window.minimized = False
+        self.page.window.update()
+        # Flet 0.85: window.to_front() is async; schedule it on the loop.
+        # Also acts as a fallback in case minimized=False didn't restore.
+        self.page.run_task(self.page.window.to_front)
 
     def quit(self) -> None:
         if self._closing:
