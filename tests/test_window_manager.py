@@ -24,8 +24,8 @@ def _isolate_settings(tmp_path, monkeypatch):
 def _stub_win32(monkeypatch):
     """Default: pretend Win32 hide/restore succeeded so the fallback path
     isn't exercised. Individual tests can override these mocks."""
-    monkeypatch.setattr(_win32_window, "hide", lambda title: True)
-    monkeypatch.setattr(_win32_window, "restore", lambda title: True)
+    monkeypatch.setattr(_win32_window, "hide", lambda: True)
+    monkeypatch.setattr(_win32_window, "restore", lambda: True)
 
 
 def test_hide_to_tray_calls_win32_hide(mock_page, monkeypatch):
@@ -33,12 +33,12 @@ def test_hide_to_tray_calls_win32_hide(mock_page, monkeypatch):
     monkeypatch.setattr(_win32_window, "hide", spy)
     wm = window_manager.WindowManager(mock_page, on_real_quit=MagicMock())
     wm.hide_to_tray()
-    spy.assert_called_once_with("test-window")
+    spy.assert_called_once_with()
 
 
 def test_hide_to_tray_falls_back_to_flet_properties_if_win32_fails(
         mock_page, monkeypatch):
-    monkeypatch.setattr(_win32_window, "hide", lambda title: False)
+    monkeypatch.setattr(_win32_window, "hide", lambda: False)
     wm = window_manager.WindowManager(mock_page, on_real_quit=MagicMock())
     wm.hide_to_tray()
     assert mock_page.window.skip_task_bar is True
@@ -51,11 +51,11 @@ def test_show_from_tray_calls_win32_restore(mock_page, monkeypatch):
     monkeypatch.setattr(_win32_window, "restore", spy)
     wm = window_manager.WindowManager(mock_page, on_real_quit=MagicMock())
     wm.show_from_tray()
-    spy.assert_called_once_with("test-window")
+    spy.assert_called_once_with()
 
 
 def test_show_from_tray_falls_back_if_win32_fails(mock_page, monkeypatch):
-    monkeypatch.setattr(_win32_window, "restore", lambda title: False)
+    monkeypatch.setattr(_win32_window, "restore", lambda: False)
     wm = window_manager.WindowManager(mock_page, on_real_quit=MagicMock())
     mock_page.window.minimized = True
     mock_page.window.skip_task_bar = True

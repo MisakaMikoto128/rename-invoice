@@ -20,15 +20,11 @@ class WindowManager:
         self.on_real_quit = on_real_quit
         self._closing = False
 
-    def _window_title(self) -> str:
-        return str(self.page.title or "")
-
     def hide_to_tray(self) -> None:
         # Primary path: Win32 ShowWindow(SW_HIDE) — truly hides the window,
         # removes from taskbar AND Alt-Tab. The standard Windows tray-app
-        # mechanism. Fallback to Flet properties only if hwnd lookup fails
-        # (non-Windows dev mode or title-mismatch).
-        if _win32_window.hide(self._window_title()):
+        # mechanism. Lookup is by PID-enumeration (not title) for robustness.
+        if _win32_window.hide():
             return
         # Fallback (best-effort, may not fully hide on Flet 0.85)
         self.page.window.skip_task_bar = True
@@ -40,9 +36,9 @@ class WindowManager:
             return
         # Win32 SW_RESTORE handles all states (hidden / minimized / normal)
         # and SetForegroundWindow brings it to focus.
-        if _win32_window.restore(self._window_title()):
+        if _win32_window.restore():
             return
-        # Fallback path for non-Windows / title-mismatch
+        # Fallback path for non-Windows / hwnd lookup failure
         self.page.window.skip_task_bar = False
         self.page.window.update()
         self.page.window.minimized = False
