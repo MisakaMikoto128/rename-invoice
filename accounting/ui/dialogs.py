@@ -79,22 +79,8 @@ def show_settings_dialog(page: ft.Page, current_root: str, project_count: int,
 
     theme_switch.on_change = on_theme_change
 
-    # --- 行为 (close action + autostart) ---
+    # --- 开机启动 ---
     from accounting import autostart as _autostart
-
-    close_options = [
-        ft.dropdown.Option("ask", "询问"),
-        ft.dropdown.Option("hide", "隐藏到托盘"),
-        ft.dropdown.Option("exit", "直接退出"),
-    ]
-    current_close = _settings.get(_settings.KEY_CLOSE_ACTION, "ask")
-    close_dd = ft.Dropdown(label="关闭时", value=current_close,
-                            options=close_options, width=240)
-
-    def on_close_change(_e):
-        _settings.set_value(_settings.KEY_CLOSE_ACTION, close_dd.value or "ask")
-
-    close_dd.on_change = on_close_change
 
     autostart_switch = ft.Switch(label="开机启动",
                                   value=_autostart.is_enabled())
@@ -126,8 +112,7 @@ def show_settings_dialog(page: ft.Page, current_root: str, project_count: int,
         content=ft.Column([
             ft.Text("外观", weight=ft.FontWeight.BOLD),
             theme_switch,
-            ft.Text("行为", weight=ft.FontWeight.BOLD),
-            close_dd,
+            ft.Text("启动", weight=ft.FontWeight.BOLD),
             autostart_switch,
             ft.Container(height=12),
             ft.Text("项目存储根目录", weight=ft.FontWeight.BOLD),
@@ -141,7 +126,7 @@ def show_settings_dialog(page: ft.Page, current_root: str, project_count: int,
                     "并更新数据库里的路径。数据库本身和设置文件保持在 "
                     "%APPDATA%\\rename-invoice\\ 不变。",
                     size=11, color=ft.Colors.OUTLINE),
-        ], tight=True, height=380, width=480),
+        ], tight=True, height=320, width=480),
         actions=[
             ft.TextButton("关闭", on_click=lambda _e: page.pop_dialog()),
             ft.ElevatedButton("迁移到新位置...", icon=ft.Icons.DRIVE_FILE_MOVE,
@@ -263,60 +248,3 @@ def show_export_success_snackbar(page: ft.Page, message: str,
     page.show_dialog(snack)
 
 
-def show_close_confirm_dialog(page: ft.Page,
-                               on_hide: Callable[[bool], None],
-                               on_quit: Callable[[bool], None]) -> None:
-    """First-time close confirm. on_hide / on_quit receive `remember: bool`.
-
-    Buttons: [隐藏到托盘] (primary) / [退出] / [取消].
-    Checkbox: [☑ 记住本次选择] (default checked).
-    """
-    remember_cb = ft.Checkbox(label="记住本次选择(可在设置里修改)", value=True)
-
-    def click_hide(_e):
-        page.pop_dialog()
-        on_hide(bool(remember_cb.value))
-
-    def click_quit(_e):
-        page.pop_dialog()
-        on_quit(bool(remember_cb.value))
-
-    def click_cancel(_e):
-        page.pop_dialog()
-
-    dialog = ft.AlertDialog(
-        title=ft.Text("关闭 AccountManager"),
-        content=ft.Column([
-            ft.Text("关闭主窗口后, 应用继续在系统托盘运行吗?"),
-            ft.Container(height=8),
-            remember_cb,
-        ], tight=True, width=420, height=110),
-        actions=[
-            ft.TextButton("取消", on_click=click_cancel),
-            ft.TextButton("退出", on_click=click_quit),
-            ft.ElevatedButton("隐藏到托盘", on_click=click_hide),
-        ],
-    )
-    page.show_dialog(dialog)
-
-
-def show_about_dialog(page: ft.Page, version: str = "1.0.2") -> None:
-    """Static About box. Version string supplied by caller."""
-    content = ft.Column([
-        ft.Text(f"AccountManager v{version}", weight=ft.FontWeight.BOLD),
-        ft.Container(height=4),
-        ft.Text("发票批量管理 / 报销账目跟踪", size=12),
-        ft.Container(height=12),
-        ft.Text("GitHub: github.com/MisakaMikoto128/rename-invoice",
-                size=12, color=ft.Colors.OUTLINE, selectable=True),
-        ft.Text("Licensed under MIT", size=11, color=ft.Colors.OUTLINE),
-    ], tight=True, width=400, height=140)
-
-    dialog = ft.AlertDialog(
-        title=ft.Text("关于 AccountManager"),
-        content=content,
-        actions=[
-            ft.TextButton("关闭", on_click=lambda _e: page.pop_dialog()),
-        ],
-    )
-    page.show_dialog(dialog)

@@ -6,7 +6,7 @@ Usage:
     python build.py        # or: .\\build.bat
 
 Output:
-    release/v<version>/AccountManager.exe   (~80 MB, single-file)
+    release/v<version>/AccountManager.exe   (~75 MB, single-file)
 
 Prereqs (one-time):
     pip install -r requirements.txt
@@ -17,7 +17,7 @@ Why PyInstaller over Nuitka:
     analysis on PyMuPDF's SWIG-generated bindings (`pymupdf.mupdf`) for
     hours, even with module-include flags trimmed and `--lto=yes` dropped.
     PyInstaller with the exclude list below builds in ~30 s and produces
-    an ~80 MB exe -- close enough to Nuitka's projected size that the
+    a 75 MB exe -- close enough to Nuitka's projected size that the
     build-time cost isn't worth it.
 """
 from __future__ import annotations
@@ -154,10 +154,6 @@ def build() -> None:
         "--hidden-import", "openpyxl",
         "--product-name", APP_NAME,
         "--file-description", APP_DESC,
-        "--add-data", f"{SCRIPT_DIR / 'assets' / 'icon-256.png'};assets",
-        "--hidden-import", "pystray._win32",
-        "--hidden-import", "PIL.Image",
-        "--hidden-import", "PIL.ImageDraw",
         "-y",
     ]
     cmd += [f"--pyinstaller-build-args=--exclude-module={m}" for m in EXCLUDES]
