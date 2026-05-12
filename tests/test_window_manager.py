@@ -116,7 +116,7 @@ def test_on_window_event_minimize_hides_to_tray(mock_page, monkeypatch):
     spy = MagicMock(return_value=True)
     monkeypatch.setattr(_win32_window, "hide", spy)
     wm = window_manager.WindowManager(mock_page, on_real_quit=MagicMock())
-    evt = MagicMock(); evt.data = "minimize"
+    evt = MagicMock(); evt.type.value = "minimize"; evt.data = None
     wm.on_window_event(evt)
     spy.assert_called_once()
 
@@ -125,6 +125,17 @@ def test_on_window_event_close_routes_to_handle_close(mock_page):
     settings.set_value(settings.KEY_CLOSE_ACTION, "exit")
     cleanup = MagicMock()
     wm = window_manager.WindowManager(mock_page, on_real_quit=cleanup)
-    evt = MagicMock(); evt.data = "close"
+    evt = MagicMock(); evt.type.value = "close"; evt.data = None
     wm.on_window_event(evt)
     cleanup.assert_called_once()
+
+
+def test_on_window_event_fallback_to_data_for_older_flet(mock_page, monkeypatch):
+    """Backwards-compat: if e.type is missing/None, fall back to e.data."""
+    spy = MagicMock(return_value=True)
+    monkeypatch.setattr(_win32_window, "hide", spy)
+    wm = window_manager.WindowManager(mock_page, on_real_quit=MagicMock())
+    evt = MagicMock(spec=[])  # no .type attribute
+    evt.data = "minimize"
+    wm.on_window_event(evt)
+    spy.assert_called_once()

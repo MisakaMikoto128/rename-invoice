@@ -56,9 +56,16 @@ class WindowManager:
         self.page.run_task(self.page.window.destroy)
 
     def on_window_event(self, e) -> None:
-        if e.data == "minimize":
+        # Flet 0.85 reports the event kind in e.type (a WindowEventType enum),
+        # NOT in e.data (which is None for window events). Compare by the
+        # enum's string value so we don't have to import WindowEventType here.
+        kind = getattr(getattr(e, "type", None), "value", None)
+        if kind is None:
+            # Older Flet versions used e.data; fall back to that for safety.
+            kind = getattr(e, "data", None)
+        if kind == "minimize":
             self.hide_to_tray()
-        elif e.data == "close":
+        elif kind == "close":
             self._handle_close()
 
     def _handle_close(self) -> None:
