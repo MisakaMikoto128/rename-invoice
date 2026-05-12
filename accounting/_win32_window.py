@@ -151,52 +151,84 @@ def _descendant_pids(root_pid: int) -> Set[int]:
     return out
 
 
+def _debug_log(msg: str) -> None:
+    """Write a line to %TEMP%/rename_invoice_win32.log for ad-hoc debugging."""
+    try:
+        path = os.path.join(os.environ.get("TEMP", "."),
+                            "rename_invoice_win32.log")
+        with open(path, "a", encoding="utf-8") as f:
+            import datetime
+            f.write(f"[{datetime.datetime.now().isoformat()}] {msg}\n")
+    except Exception:
+        pass
+
+
 def _find_hwnd() -> Optional[int]:
     """Find the Flutter main window HWND for our app (cached)."""
     global _hwnd_cache
     if sys.platform != "win32":
         return None
     if _hwnd_cache and _IsWindow(_hwnd_cache):
+        _debug_log(f"_find_hwnd: cache hit 0x{_hwnd_cache:X}")
         return _hwnd_cache
 
     descendants = _descendant_pids(os.getpid())
+    _debug_log(f"_find_hwnd: my_pid={os.getpid()} descendants={descendants}")
     if not descendants:
         log.warning("_win32_window: no descendant processes found")
         return None
 
-    candidates: list[int] = []
+    # Collect every Flutter window we can see across all PIDs for diagnostics,
+    # then filter down to the descendants set.
+    all_flutter: list[tuple[int, int]] = []      # (hwnd, pid) for any FLUTTER cls
+    descendant_flutter: list[int] = []           # hwnds that match descendants
 
     @_EnumWindowsProc
     def cb(hwnd, _l):
         try:
             pid = wintypes.DWORD()
             _GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
-            if pid.value not in descendants:
-                return True
             cls_buf = ctypes.create_unicode_buffer(256)
             _GetClassNameW(hwnd, cls_buf, 256)
             if cls_buf.value == FLUTTER_CLS:
-                candidates.append(hwnd)
+                all_flutter.append((hwnd, pid.value))
+                if pid.value in descendants:
+                    descendant_flutter.append(hwnd)
         except Exception:
             pass
         return True
 
     _EnumWindows(cb, 0)
-    if not candidates:
-        log.warning("_win32_window: no Flutter window found in descendants %s",
-                    descendants)
-        return None
-    _hwnd_cache = candidates[0]
-    log.info("_win32_window: cached hwnd=0x%X", _hwnd_cache)
-    return _hwnd_cache
+    _debug_log(f"_find_hwnd: all_flutter_windows={all_flutter} "
+               f"descendant_matches={descendant_flutter}")
+
+    if descendant_flutter:
+        _hwnd_cache = descendant_flutter[0]
+        _debug_log(f"_find_hwnd: SUCCESS cached hwnd=0x{_hwnd_cache:X}")
+        return _hwnd_cache
+
+    # Fallback: if there's exactly one Flutter window system-wide and no
+    # descendant match, assume it's ours (Flet's subprocess hierarchy on
+    # some setups may not be reachable from our pid).
+    if len(all_flutter) == 1:
+        _hwnd_cache = all_flutter[0][0]
+        _debug_log(f"_find_hwnd: FALLBACK using lone Flutter window "
+                   f"hwnd=0x{_hwnd_cache:X} pid={all_flutter[0][1]}")
+        return _hwnd_cache
+
+    _debug_log(f"_find_hwnd: FAILED — {len(all_flutter)} Flutter windows but "
+               f"none in descendants {descendants}")
+    return None
 
 
 def hide() -> bool:
     """ShowWindow(SW_HIDE). True iff hwnd was located."""
     hwnd = _find_hwnd()
     if not hwnd:
+        _debug_log("hide(): _find_hwnd returned None -> False")
         return False
-    _ShowWindow(hwnd, SW_HIDE)
+    rv = _ShowWindow(hwnd, SW_HIDE)
+    _debug_log(f"hide(): ShowWindow(0x{hwnd:X}, SW_HIDE) returned {rv}")
     return True
 
 
@@ -204,7 +236,10 @@ def restore() -> bool:
     """ShowWindow(SW_RESTORE) + SetForegroundWindow. True iff hwnd was located."""
     hwnd = _find_hwnd()
     if not hwnd:
+        _debug_log("restore(): _find_hwnd returned None -> False")
         return False
-    _ShowWindow(hwnd, SW_RESTORE)
-    _SetForegroundWindow(hwnd)
+    rv1 = _ShowWindow(hwnd, SW_RESTORE)
+    rv2 = _SetForegroundWindow(hwnd)
+    _debug_log(f"restore(): ShowWindow(SW_RESTORE)={rv1} "
+               f"SetForegroundWindow={rv2}")
     return True
