@@ -2,12 +2,16 @@
 
 The dialog itself lives in `accounting/ui/dialogs.py` and is imported lazily
 to avoid pulling Flet/UI symbols when WindowManager is unit-tested.
+
+Hide/restore uses Win32 ShowWindow directly (via _win32_window) because
+Flet 0.85's property-based minimize/restore is unreliable -- the window
+gets stuck minimized with no taskbar entry. See _win32_window for details.
 """
 from __future__ import annotations
 
 from typing import Callable
 
-from accounting import settings
+from accounting import _win32_window, settings
 
 
 class WindowManager:
@@ -16,16 +20,17 @@ class WindowManager:
         self.on_real_quit = on_real_quit
         self._closing = False
 
+    def _window_title(self) -> str:
+        return str(self.page.title or "")
+
     def hide_to_tray(self) -> None:
-        # Idempotent — also prevents recursion when on_window_event(minimize)
-        # routes back here after we set minimized=True programmatically.
-        if self.page.window.skip_task_bar:
+        # Primary path: Win32 ShowWindow(SW_HIDE) — truly hides the window,
+        # removes from taskbar AND Alt-Tab. The standard Windows tray-app
+        # mechanism. Fallback to Flet properties only if hwnd lookup fails
+        # (non-Windows dev mode or title-mismatch).
+        if _win32_window.hide(self._window_title()):
             return
-        # Flet 0.85: window.visible is a startup-only flag (per its docstring).
-        # The runtime-toggleable property is `minimized`; combined with
-        # `skip_task_bar` it gives the desired "only tray icon left" UX.
-        # page.window.update() is required to push window-level changes
-        # (page.update() doesn't propagate to window properties in 0.85).
+        # Fallback (best-effort, may not fully hide on Flet 0.85)
         self.page.window.skip_task_bar = True
         self.page.window.minimized = True
         self.page.window.update()
@@ -33,16 +38,15 @@ class WindowManager:
     def show_from_tray(self) -> None:
         if self._closing:
             return
-        # Restore in two flushes: re-add the taskbar entry first so the OS
-        # has a target to restore to, THEN un-minimize. Sending both in one
-        # update() leaves the window stuck minimized (observed on Flet 0.85
-        # / Windows 11).
+        # Win32 SW_RESTORE handles all states (hidden / minimized / normal)
+        # and SetForegroundWindow brings it to focus.
+        if _win32_window.restore(self._window_title()):
+            return
+        # Fallback path for non-Windows / title-mismatch
         self.page.window.skip_task_bar = False
         self.page.window.update()
         self.page.window.minimized = False
         self.page.window.update()
-        # Flet 0.85: window.to_front() is async; schedule it on the loop.
-        # Also acts as a fallback in case minimized=False didn't restore.
         self.page.run_task(self.page.window.to_front)
 
     def quit(self) -> None:

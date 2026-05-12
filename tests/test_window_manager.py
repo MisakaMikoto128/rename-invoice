@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock, patch
 import pytest
 
-from accounting import window_manager, settings
+from accounting import _win32_window, window_manager, settings
 
 
 @pytest.fixture
@@ -10,6 +10,7 @@ def mock_page():
     p = MagicMock()
     p.window.skip_task_bar = False
     p.window.minimized = False
+    p.title = "test-window"
     return p
 
 
@@ -19,7 +20,25 @@ def _isolate_settings(tmp_path, monkeypatch):
                          lambda: tmp_path / "settings.json")
 
 
-def test_hide_to_tray_minimizes_and_skips_taskbar(mock_page):
+@pytest.fixture(autouse=True)
+def _stub_win32(monkeypatch):
+    """Default: pretend Win32 hide/restore succeeded so the fallback path
+    isn't exercised. Individual tests can override these mocks."""
+    monkeypatch.setattr(_win32_window, "hide", lambda title: True)
+    monkeypatch.setattr(_win32_window, "restore", lambda title: True)
+
+
+def test_hide_to_tray_calls_win32_hide(mock_page, monkeypatch):
+    spy = MagicMock(return_value=True)
+    monkeypatch.setattr(_win32_window, "hide", spy)
+    wm = window_manager.WindowManager(mock_page, on_real_quit=MagicMock())
+    wm.hide_to_tray()
+    spy.assert_called_once_with("test-window")
+
+
+def test_hide_to_tray_falls_back_to_flet_properties_if_win32_fails(
+        mock_page, monkeypatch):
+    monkeypatch.setattr(_win32_window, "hide", lambda title: False)
     wm = window_manager.WindowManager(mock_page, on_real_quit=MagicMock())
     wm.hide_to_tray()
     assert mock_page.window.skip_task_bar is True
@@ -27,24 +46,22 @@ def test_hide_to_tray_minimizes_and_skips_taskbar(mock_page):
     mock_page.window.update.assert_called()
 
 
-def test_hide_to_tray_is_idempotent(mock_page):
-    """Second call short-circuits — prevents recursion when minimize event
-    re-routes through on_window_event after a programmatic minimize."""
+def test_show_from_tray_calls_win32_restore(mock_page, monkeypatch):
+    spy = MagicMock(return_value=True)
+    monkeypatch.setattr(_win32_window, "restore", spy)
     wm = window_manager.WindowManager(mock_page, on_real_quit=MagicMock())
-    wm.hide_to_tray()
-    mock_page.window.update.reset_mock()
-    wm.hide_to_tray()
-    mock_page.window.update.assert_not_called()
+    wm.show_from_tray()
+    spy.assert_called_once_with("test-window")
 
 
-def test_show_from_tray_unminimizes_and_brings_to_front(mock_page):
+def test_show_from_tray_falls_back_if_win32_fails(mock_page, monkeypatch):
+    monkeypatch.setattr(_win32_window, "restore", lambda title: False)
     wm = window_manager.WindowManager(mock_page, on_real_quit=MagicMock())
     mock_page.window.minimized = True
     mock_page.window.skip_task_bar = True
     wm.show_from_tray()
     assert mock_page.window.minimized is False
     assert mock_page.window.skip_task_bar is False
-    # to_front() is async in Flet 0.85; we schedule it via page.run_task.
     mock_page.run_task.assert_any_call(mock_page.window.to_front)
 
 
@@ -69,12 +86,13 @@ def test_quit_is_idempotent(mock_page):
     assert len(destroy_calls) == 1
 
 
-def test_handle_close_action_hide_hides_without_dialog(mock_page):
+def test_handle_close_action_hide_hides_without_dialog(mock_page, monkeypatch):
     settings.set_value(settings.KEY_CLOSE_ACTION, "hide")
+    spy = MagicMock(return_value=True)
+    monkeypatch.setattr(_win32_window, "hide", spy)
     wm = window_manager.WindowManager(mock_page, on_real_quit=MagicMock())
     wm._handle_close()
-    assert mock_page.window.minimized is True
-    assert mock_page.window.skip_task_bar is True
+    spy.assert_called_once()
 
 
 def test_handle_close_action_exit_quits_without_dialog(mock_page):
@@ -94,12 +112,13 @@ def test_handle_close_action_ask_shows_dialog(mock_page, monkeypatch):
     spy.assert_called_once()
 
 
-def test_on_window_event_minimize_hides_to_tray(mock_page):
+def test_on_window_event_minimize_hides_to_tray(mock_page, monkeypatch):
+    spy = MagicMock(return_value=True)
+    monkeypatch.setattr(_win32_window, "hide", spy)
     wm = window_manager.WindowManager(mock_page, on_real_quit=MagicMock())
     evt = MagicMock(); evt.data = "minimize"
     wm.on_window_event(evt)
-    assert mock_page.window.minimized is True
-    assert mock_page.window.skip_task_bar is True
+    spy.assert_called_once()
 
 
 def test_on_window_event_close_routes_to_handle_close(mock_page):
