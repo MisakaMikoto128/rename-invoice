@@ -115,6 +115,10 @@ foreach ($t in $Targets) {
 
     Set-ItemProperty -Path $shellKey   -Name '(Default)' -Value $MenuText
     Set-ItemProperty -Path $shellKey   -Name 'Icon'      -Value $IconPath
+    # 多选上限: legacy verb 不写 MultiSelectModel 时默认 Document = 最多 15 个,
+    # 选到第 16 个菜单直接不显示. Player 把上限抬到 100.
+    # 仍然是"每个文件启动一次进程", 由 rename_invoice.py 的队列 + leader 锁合并.
+    Set-ItemProperty -Path $shellKey   -Name 'MultiSelectModel' -Value 'Player'
     Set-ItemProperty -Path $commandKey -Name '(Default)' -Value $t.Cmd
 
     Write-Host "[OK] $($t.Desc): $shellKey" -ForegroundColor Green
@@ -132,5 +136,6 @@ if (-not $EnableSummary -and -not $EnableXlsx) {
     Write-Host "(纯静默: 完全无窗口, 结果写入 rename_invoice.log)" -ForegroundColor Yellow
 }
 Write-Host "(Win11 用户可能需要点'显示更多选项'才能看到自定义菜单)" -ForegroundColor Yellow
+Write-Host "(多选上限 100 个 PDF; 超过就直接右键所在文件夹, 一次处理整个目录)" -ForegroundColor Yellow
 Write-Host ""
 if (-not $NoPrompt) { pause }

@@ -31,15 +31,32 @@ try:
 except Exception:
     pass
 
-try:
-    import fitz  # PyMuPDF
-except ImportError:
-    print('[ERROR] 缺少依赖 PyMuPDF. 请运行: pip install pymupdf')
-    try:
-        input('按回车键退出...')
-    except Exception:
-        pass
-    sys.exit(1)
+# PyMuPDF 是**延迟导入**的, 不要挪回模块顶层.
+#
+# 右键多选 N 个 PDF 时, Explorer 会把本脚本启动 N 次 (legacy verb 的多选模型就是
+# 一个文件一个进程, 见 install_context.ps1 里 MultiSelectModel 的注释). 这 N 个进程
+# 里只有抢到 leader 锁的那一个真的要解析 PDF, 其余的写完队列就退出.
+# 顶层 import fitz 会让每个进程都白白载入一遍 PyMuPDF (几十 MB 的 native 库),
+# 这正是"选中的 PDF 一多, 右键之后机器就卡一下"的来源.
+_fitz = None
+
+
+def _load_fitz():
+    """第一次真正要解析 PDF 时才导入 PyMuPDF."""
+    global _fitz
+    if _fitz is None:
+        try:
+            import fitz  # PyMuPDF
+        except ImportError:
+            print('[ERROR] 缺少依赖 PyMuPDF. 请运行: pip install pymupdf')
+            log_line('FAIL  缺少依赖 PyMuPDF (pip install pymupdf)')
+            try:
+                input('按回车键退出...')
+            except Exception:
+                pass
+            sys.exit(1)
+        _fitz = fitz
+    return _fitz
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -160,6 +177,7 @@ def _read_pdf(pdf_path: Path):
     返回 (full_text, first_page_blocks, page_width, error).
     blocks 是首页的 (x0, y0, x1, y1, text, ...) 列表, 用于布局判断.
     """
+    fitz = _load_fitz()
     try:
         doc = fitz.open(str(pdf_path))
     except Exception as e:
