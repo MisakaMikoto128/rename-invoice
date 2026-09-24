@@ -1,0 +1,49 @@
+[package]
+name = "rename-invoice"
+version = "0.5.3"
+edition = "2021"
+description = "发票 PDF 自动加价格前缀工具 (Rust 实现, 单 .exe + pdfium.dll)"
+license = "MIT"
+build = "build.rs"
+
+[[bin]]
+# console 子系统 (默认): install / uninstall / 直接模式
+# 父 shell (PowerShell / cmd) 同步等它退, stdin/stdout 正常.
+name = "rename-invoice"
+path = "src/main.rs"
+
+[[bin]]
+# windows 子系统: 注册表右键 verb 走这个, 启动时 0 cmd 窗口闪烁.
+# 子系统切换在 build.rs 里通过 cargo:rustc-link-arg-bin 设置.
+#
+# 注意它是 shim 而不是完整主程序 (src/shim.rs, 只依赖 std + fs2 + windows-sys):
+# Explorer 会按选中文件数把它启动 N 次, 所以它必须小. 真正干活的重进程由它
+# 拉起, 全程只有 1 个. 原因详见 src/shim.rs 顶部注释.
+name = "rename-invoice-w"
+path = "src/shim.rs"
+
+[dependencies]
+pdfium-render = "0.8"
+rust_xlsxwriter = { version = "0.79", features = ["chrono"] }
+chrono = "0.4"
+regex = "1"
+fs2 = "0.4"
+anyhow = "1"
+slint = "1.13"
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.55"
+windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_Storage_FileSystem", "Win32_System_Console", "Win32_System_Threading", "Win32_UI_WindowsAndMessaging"] }
+
+[build-dependencies]
+slint-build = "1.13"
+
+[target.'cfg(windows)'.build-dependencies]
+winresource = "0.1"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+strip = true
+panic = "abort"
