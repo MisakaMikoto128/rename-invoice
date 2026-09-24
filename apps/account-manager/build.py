@@ -31,7 +31,7 @@ from pathlib import Path
 SCRIPT_DIR = Path(__file__).parent.resolve()
 ENTRY      = SCRIPT_DIR / "accounting" / "ui" / "app.py"
 ICON       = SCRIPT_DIR / "assets" / "icon.ico"
-RENAME_PY  = SCRIPT_DIR / "rename_invoice.py"
+RENAME_PY  = SCRIPT_DIR.parent / "cli" / "rename_invoice.py"
 DIST_EXE   = SCRIPT_DIR / "dist" / "AccountManager.exe"
 RELEASE    = SCRIPT_DIR / "release"
 

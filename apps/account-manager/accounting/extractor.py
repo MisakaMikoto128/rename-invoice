@@ -4,14 +4,21 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-# rename_invoice.py 在 repo 根, 不是 package - 把 repo 根加进 sys.path.
-# 在 PyInstaller 打包后的 frozen 环境里, 文件在 sys._MEIPASS 临时目录, 不在源码树。
+# rename_invoice.py 是 apps/cli/ 下的独立脚本 (不是 package) - 把它所在目录
+# 加进 sys.path. 在 PyInstaller 打包后的 frozen 环境里, 文件在 sys._MEIPASS
+# 临时目录 (build.py 以 datas 打进去), 不在源码树。
 if getattr(sys, "frozen", False):
-    _REPO_ROOT = Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent))
+    _CLI_DIR = Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent))
 else:
-    _REPO_ROOT = Path(__file__).resolve().parent.parent
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
+    # apps/account-manager/accounting/extractor.py -> apps/cli/
+    _CLI_DIR = Path(__file__).resolve().parents[2] / "cli"
+    if not (_CLI_DIR / "rename_invoice.py").is_file():
+        raise ImportError(
+            f"找不到 apps/cli/rename_invoice.py (期望位于 {_CLI_DIR})。"
+            "account-manager 依赖同仓库的 invoice-cli 程序, 请检查仓库完整性。"
+        )
+if str(_CLI_DIR) not in sys.path:
+    sys.path.insert(0, str(_CLI_DIR))
 
 import rename_invoice  # noqa: E402
 

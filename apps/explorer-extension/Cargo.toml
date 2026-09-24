@@ -1,0 +1,32 @@
+[package]
+name = "invoice-explorer-extension"
+version = "1.1.0"
+edition = "2021"
+description = "Windows 11 资源管理器右键菜单扩展 (IExplorerCommand COM DLL)"
+license = "MIT"
+
+# DLL: Explorer 通过桌面 4 类 verb (ClassId) CoCreate 的 COM 组件
+[lib]
+name = "invoice_shext"
+crate-type = ["cdylib"]
+
+# 占位 exe: AppxManifest 的 <Application Executable> 要求包内有真实 exe,
+# 本扩展不展示应用条目 (AppListEntry=none), 它永远不会被启动
+[[bin]]
+name = "invoice-ext-host"
+path = "src/host.rs"
+
+[dependencies]
+windows-core = "0.62"
+windows = { version = "0.62", features = [
+    "Win32_Foundation",
+    "Win32_UI_Shell",
+    "Win32_System_Com",
+    "Win32_System_Registry",
+    "Win32_System_LibraryLoader",
+] }
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1
