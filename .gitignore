@@ -52,11 +52,20 @@ samples/
 test_invoices/
 *.pdf
 
-# Rust build artifacts
-rust/target/
+# Rust build artifacts (apps/cli/rust = 程序1 的 Rust 绿色版实现)
+apps/cli/rust/target/
 # pdfium.dll 由 release zip 单独分发, 不进 git (7 MB 二进制)
-rust/pdfium.dll
-rust/release/
+apps/cli/rust/pdfium.dll
+apps/cli/rust/release/
+apps/cli/rust/.queue.*
+
+# explorer-extension (程序3) 构建产物
+apps/explorer-extension/target/
+apps/explorer-extension/package/*.dll
+apps/explorer-extension/package/*.exe
+apps/explorer-extension/package/*.msix
+apps/explorer-extension/.sign/
+*.pfx
 *.xlsx
 
 # 单元测试用的脱敏 PDF 样本, 本地放, 不入库
@@ -64,6 +73,8 @@ tests/_pdf_samples/
 
 # PyInstaller / flet pack 产物
 *.spec
+
+.nuitka_cache/
 
 # build.py 输出 + 自签名证书
 release/

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  稀疏 MSIX 包清单 (package with external location)
+
+  用途: 把 IExplorerCommand COM 扩展注册进 Windows 11 顶层右键菜单。
+  DLL / exe / 图标以"外部位置"(本目录) 形式留在源码树, 包本身只携带身份与注册信息
+  (scripts/install.ps1 用 makeappx 打包并 Add-AppxPackage 注册)。
+
+  结构依据 (Microsoft Learn, 2026-07 版):
+  - com:ComServer/com:Class 声明 DLL 里的 COM 类; ThreadingModel="STA"
+  - desktop5:Verb/@Clsid 必须等于 com:Class/@Id, 也必须等于 lib.rs 里的 CLSID_INVOICE_EXT
+  - desktop5:ItemType Type: "*" 文件 / "Directory" 文件夹 / "Directory\Background" 空白处
+  - 稀疏包要求 uap10:AllowExternalContent=true + TrustLevel/RuntimeBehavior + runFullTrust
+
+  注意: Publisher 必须与签名证书 Subject 完全一致 (install.ps1 生成 CN=rename-invoice);
+        开发者模式开启时 install.ps1 走 -AllowUnsigned, 免证书。
+-->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap10="http://schemas.microsoft.com/appx/manifest/uap/windows10/10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10"
+  xmlns:desktop4="http://schemas.microsoft.com/appx/manifest/desktop/windows10/4"
+  xmlns:desktop5="http://schemas.microsoft.com/appx/manifest/desktop/windows10/5"
+  IgnorableNamespaces="uap uap10 rescap com desktop4 desktop5">
+
+  <Identity
+    Name="rename-invoice-ext"
+    Publisher="CN=rename-invoice"
+    Version="1.1.0.0" />
+
+  <Properties>
+    <DisplayName>rename-invoice 资源管理器扩展</DisplayName>
+    <PublisherDisplayName>MisakaMikoto128</PublisherDisplayName>
+    <Logo>assets\icon.png</Logo>
+    <uap10:AllowExternalContent>true</uap10:AllowExternalContent>
+  </Properties>
+
+  <Dependencies>
+    <!-- Win11 21H2 起才有现代右键菜单; 更老的系统请用 invoice-cli 的经典注册表 verb -->
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.22000.0" MaxVersionTested="10.0.26200.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="zh-CN" />
+  </Resources>
+
+  <Applications>
+    <Application
+      Id="App"
+      Executable="invoice-ext-host.exe"
+      uap10:TrustLevel="mediumIL"
+      uap10:RuntimeBehavior="win32App">
+      <uap:VisualElements
+        DisplayName="rename-invoice"
+        Description="rename-invoice 资源管理器扩展"
+        Square150x150Logo="assets\icon.png"
+        Square44x44Logo="assets\icon.png"
+        BackgroundColor="transparent"
+        AppListEntry="none" />
+      <Extensions>
+        <!-- 1) 注册 DLL 里的 COM 类 (IExplorerCommand 实现) -->
+        <com:Extension Category="windows.comServer">
+          <com:ComServer>
+            <com:SurrogateServer DisplayName="rename-invoice commands">
+              <com:Class
+                Id="377B2F61-66A6-4688-A5BE-82AD42F3ADF6"
+                Path="invoice_shext.dll"
+                ThreadingModel="STA" />
+            </com:SurrogateServer>
+          </com:ComServer>
+        </com:Extension>
+
+        <!-- 2) 把命令挂到资源管理器右键菜单 (文件 / 文件夹 / 空白处) -->
+        <desktop4:Extension Category="windows.fileExplorerContextMenus">
+          <desktop4:FileExplorerContextMenus>
+            <desktop5:ItemType Type="*">
+              <desktop5:Verb Id="InvoiceRename" Clsid="377B2F61-66A6-4688-A5BE-82AD42F3ADF6" />
+            </desktop5:ItemType>
+            <desktop5:ItemType Type="Directory">
+              <desktop5:Verb Id="InvoiceRename" Clsid="377B2F61-66A6-4688-A5BE-82AD42F3ADF6" />
+            </desktop5:ItemType>
+            <desktop5:ItemType Type="Directory\Background">
+              <desktop5:Verb Id="InvoiceRename" Clsid="377B2F61-66A6-4688-A5BE-82AD42F3ADF6" />
+            </desktop5:ItemType>
+          </desktop4:FileExplorerContextMenus>
+        </desktop4:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+    <rescap:Capability Name="unvirtualizedResources" />
+  </Capabilities>
+</Package>
