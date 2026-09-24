@@ -1,0 +1,8 @@
+# invoice-cli 运行依赖 (右键菜单小程序)
+# Install: pip install -r apps/cli/requirements.txt
+
+# PDF 文本提取 (rename_invoice.py)
+pymupdf>=1.24.0,<2.0
+
+# Excel 汇总导出 (--xlsx, 可选功能)
+openpyxl>=3.1.0,<4.0

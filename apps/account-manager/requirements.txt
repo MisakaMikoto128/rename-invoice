@@ -1,0 +1,11 @@
+# account-manager 运行依赖 (本地账目管理 GUI)
+# Install: pip install -r apps/account-manager/requirements.txt
+
+# 桌面 GUI
+# 下限 = 已测版本; 0.21..0.84 之间有大量破坏性 API 变更
+# (ft.app -> ft.run, Dropdown.on_change -> on_select, snack_bar API, ...)
+flet>=0.85,<1.0
+
+# 发票提取依赖的 CLI 逻辑 (apps/account-manager/accounting/extractor.py 动态 import)
+pymupdf>=1.24.0,<2.0
+openpyxl>=3.1.0,<4.0

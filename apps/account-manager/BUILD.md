@@ -28,7 +28,7 @@ Already installed in the dev environment:
 2. Wipes stale `dist/`, `build/`, `*.spec`.
 3. Runs `flet pack accounting/ui/app.py` with:
    - `--name AccountManager` / `--icon assets/icon.ico`
-   - `--add-data "rename_invoice.py;."` — bundles the CLI module
+   - `--add-data "../cli/rename_invoice.py;."` — bundles the CLI module (from apps/cli/)
    - `--hidden-import rename_invoice fitz openpyxl`
    - 29 `--pyinstaller-build-args=--exclude-module=...` flags trimming the bundle from ~237 MB to ~75 MB
 4. Copies `dist\AccountManager.exe` → `release\v<version>\AccountManager.exe`.
