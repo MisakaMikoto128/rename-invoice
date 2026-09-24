@@ -9,6 +9,11 @@ cargo build --release --manifest-path (Join-Path $AppDir 'Cargo.toml')
 if ($LASTEXITCODE -ne 0) { throw "cargo build 失败 (exit $LASTEXITCODE)" }
 
 foreach ($name in @('invoice_shext.dll', 'invoice-ext-host.exe')) {
-    Copy-Item (Join-Path $Target $name) (Join-Path $AppDir 'package') -Force
+    $dst = Join-Path $AppDir "package\$name"
+    try {
+        Copy-Item (Join-Path $Target $name) $dst -Force
+    } catch {
+        throw "覆盖 $dst 失败 - 文件可能正被 explorer.exe 使用。`n先运行 scripts/uninstall.ps1 (或重启 explorer.exe) 再构建。"
+    }
     Write-Host "[OK] package/$name"
 }

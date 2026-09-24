@@ -53,6 +53,25 @@ if (-not (Test-Path (Join-Path $PkgDir 'AppxManifest.xml'))) {
     exit 1
 }
 
+# --- 0.5 DLL 占用检查 ----------------------------------------------------
+# 用过右键菜单后重装时, explorer.exe 可能还加载着旧 DLL, 覆盖会失败;
+# 检测到占用就先重启资源管理器 (explorer.exe 会自动拉起)。
+function Test-FileLocked([string]$path) {
+    if (-not (Test-Path $path)) { return $false }
+    try {
+        $fs = [System.IO.File]::Open($path, 'Open', 'ReadWrite', 'None')
+        $fs.Close()
+        return $false
+    } catch { return $true }
+}
+if (Test-FileLocked $Dll) {
+    Write-Host "[..] DLL 正被 explorer.exe 占用, 重启资源管理器 ..."
+    Stop-Process -Name explorer -Force
+    Start-Sleep -Seconds 3
+    if (Test-FileLocked $Dll) { throw "DLL 仍被占用: $Dll (请关闭所有资源管理器窗口后重试)" }
+    Write-Host "[OK] explorer.exe 已重启"
+}
+
 # --- 1. 构建 DLL ---------------------------------------------------------
 if (-not (Test-Path $Dll) -or -not (Test-Path $HostExe)) {
     & (Join-Path $PSScriptRoot 'build.ps1')

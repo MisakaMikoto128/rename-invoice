@@ -33,7 +33,7 @@
   xlsx 导出全在里面。它不是 package, 其它程序通过 `sys.path` 注入复用它。
 - 经典右键菜单走 HKCU 注册表 verb (`install_context.ps1`), 多选时 N 次进程
   通过文件锁 (`.leader.lock` + `msvcrt.locking`) 合并为一次处理。
-- 为什么单文件: 右键菜单注册的是绝对路径, 单文件 = 部署面最小; 也是 GUI
+- 为什么单文件：右键菜单注册的是绝对路径，单文件 = 部署面最小；也是 GUI
   frozen 打包时唯一的 data 文件 (`build.py --add-data`)。
 
 ### apps/account-manager (程序 2) — GUI
@@ -42,7 +42,7 @@
 - `accounting/extractor.py` 是唯一跨程序耦合点: dev 模式把 `apps/cli` 加进
   `sys.path` 后 `import rename_invoice`; frozen 模式从 `sys._MEIPASS` 拿
   (build.py 已把 rename_invoice.py 打进包)。
-- 测试 `tests/` 94 个, 覆盖 db/services/ui state/extractor。
+- 测试 `tests/` 94 个，覆盖 db/services/ui state/extractor。
 
 ### apps/explorer-extension (程序 3) — Win11 现代菜单
 
@@ -51,13 +51,13 @@
   1. 对选中项集合调 `GetState` → 没有目标 (PDF/文件夹) 时返回 `ECS_HIDDEN`
   2. 展开菜单时调 `GetTitle`/`GetIcon`/`GetToolTip`
   3. 用户点击时调 `Invoke` → **一次拿到全部选中路径**, 交给 CLI
-- DLL 不做任何业务逻辑: 读 `HKCU\Software\rename-invoice\ExplorerExt` 的
+- DLL 不做任何业务逻辑：读 `HKCU\Software\rename-invoice\ExplorerExt` 的
   `ExePath`/`Args`, 追加选中路径后 spawn。默认指向 pythonw + 程序 1。
 - 注册用**稀疏 MSIX 包** (`package/AppxManifest.xml`):
   - `com:ComServer/com:Class` 声明 COM 类 (CLSID 固化)
   - `desktop4:FileExplorerContextMenus` 挂三个 ItemType (`*`/`Directory`/
     `Directory\Background`)
-  - `uap10:AllowExternalContent=true` → DLL/exe 留在源码树, 不复制进系统
+  - `uap10:AllowExternalContent=true` → DLL/exe 留在源码树，不复制进系统
   - 开发者模式开启时 `Add-AppxPackage -Register` 直注册 (免签名免 UAC);
     否则走自签证书 + signtool + TrustedPeople (弹一次 UAC)
 
@@ -70,11 +70,11 @@
 
 ## 已知约束
 
-- explorer-extension 只进 Win11 21H2+ 的**现代**菜单; 经典菜单 ("显示更多
-  选项"里) 由程序 1 的 verb 负责, 两者共存。
+- explorer-extension 只进 Win11 21H2+ 的**现代**菜单；经典菜单 ("显示更多
+  选项"里) 由程序 1 的 verb 负责，两者共存。
 - 稀疏包的 InstallLocation 指向源码树 → 移动仓库目录后需重跑
   `scripts/install.ps1` (与程序 1 的右键菜单注册同样的限制)。
 - CLSID `{377B2F61-66A6-4688-A5BE-82AD42F3ADF6}` 固化在 lib.rs 与
-  AppxManifest.xml 两处, 改了必须同步, 等于逼所有用户重装。
+  AppxManifest.xml 两处，改了必须同步，等于逼所有用户重装。
 - windows-rs 的 `IExplorerCommand` 签名以 SDK 头文件 `shobjidl_core.h` 为准
   (`GetCanonicalName(GUID*)` / `GetFlags(EXPCMDFLAGS*)` 没有数组参数)。

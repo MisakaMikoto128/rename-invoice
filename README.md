@@ -4,7 +4,7 @@
 
 <h1 align="center">rename-invoice</h1>
 
-<p align="center">中国增值税电子发票工具箱 — 三个程序, 一套校验逻辑</p>
+<p align="center">中国增值税电子发票工具箱 — 三个程序，一套校验逻辑</p>
 
 <p align="center">
 <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
@@ -20,9 +20,9 @@
 98.01元-某某科技有限公司_20260416104223.pdf
 ```
 
-**面向财务场景: 金额错认会引发实际损失。工具采用三层校验
+**面向财务场景：金额错认会引发实际损失。工具采用三层校验
 (中文大写 ↔ 阿拉伯数字精确匹配 + 最大 ¥ 值检查 + 失败即拒绝),
-任一不通过就不重命名, 绝不猜测。** 100% 离线, 零联网。
+任一不通过就不重命名，绝不猜测。** 100% 离线，零联网。
 
 > A Windows toolbox that renames Chinese VAT invoice PDFs to include their
 > total amount as a filename prefix, with strict cross-validation between the
@@ -32,12 +32,12 @@
 
 | # | 程序 | 目录 | 技术 | 一句话 |
 |---|---|---|---|---|
-| 1 | **invoice-cli** 右键菜单小程序 | [`apps/cli`](./apps/cli/) | Python + PyMuPDF | 拖放 / 双击 / 经典右键菜单, 三层校验的核心实现 |
-| 2 | **account-manager** 本地账目管理 | [`apps/account-manager`](./apps/account-manager/) | Python + Flet + SQLite | 项目化管理报销批次, 表格编辑, 导出 xlsx/zip |
-| 3 | **explorer-extension** 资源管理器插件 | [`apps/explorer-extension`](./apps/explorer-extension/) | Rust + COM (IExplorerCommand) | Win11 **顶层**右键菜单直达, 带图标, 多选单次触发 |
+| 1 | **invoice-cli** 右键菜单小程序 | [`apps/cli`](./apps/cli/) | Python + PyMuPDF | 拖放 / 双击 / 经典右键菜单，三层校验的核心实现 |
+| 2 | **account-manager** 本地账目管理 | [`apps/account-manager`](./apps/account-manager/) | Python + Flet + SQLite | 项目化管理报销批次，表格编辑，导出 xlsx/zip |
+| 3 | **explorer-extension** 资源管理器插件 | [`apps/explorer-extension`](./apps/explorer-extension/) | Rust + COM (IExplorerCommand) | Win11 **顶层**右键菜单直达，带图标，多选单次触发 |
 
 三个程序共享同一套发票提取/校验逻辑 (apps/cli/rename_invoice.py),
-处理结果完全一致, 审计日志同一份。
+处理结果完全一致，审计日志同一份。
 
 ## 快速开始
 
@@ -71,9 +71,9 @@ cd apps\explorer-extension\scripts
 
 | 场景 | 推荐 |
 |---|---|
-| 偶尔处理一批发票, 用完即走 | 程序 1 (拖放 / 右键) |
+| 偶尔处理一批发票，用完即走 | 程序 1 (拖放 / 右键) |
 | Win11, 想要最顺手的一键处理 | 程序 3 (顶层右键菜单) |
-| 管理整月报销, 要填备注/淘宝单号/报销状态 | 程序 2 |
+| 管理整月报销，要填备注/淘宝单号/报销状态 | 程序 2 |
 | 老板要 Excel 汇总 | 程序 1 `--xlsx` 或程序 2 导出 |
 
 ## 仓库结构
@@ -95,8 +95,8 @@ rename-invoice/
 
 ## 可靠性是怎么保证的
 
-每张增值税发票都有两个法律等价的金额字段: 价税合计(小写) `¥98.01`
-和 价税合计(大写) `玖拾捌圆零壹分`。工具同时提取两者, 要求精确匹配
+每张增值税发票都有两个法律等价的金额字段：价税合计(小写) `¥98.01`
+和 价税合计(大写) `玖拾捌圆零壹分`。工具同时提取两者，要求精确匹配
 (容差 0.005 元), 且大写转换值必须是全票最大 ¥ 值 (防止错认金额/税额行)。
 任何一步不确定 → 保留原名 + 记审计日志。中文大写解析器有 15 个单元测试,
 全部业务逻辑 109 个测试由 CI 在 Windows 上跑。
@@ -112,7 +112,7 @@ cd apps/explorer-extension && cargo clippy --release
 ```
 
 约定见 [CONTRIBUTING.md](./CONTRIBUTING.md)。发票样本无法识别? 欢迎在 issue
-里提供**脱敏后的**样本 (公司名、号码可涂黑, 金额字段保留)。
+里提供**脱敏后的**样本 (公司名、号码可涂黑，金额字段保留)。
 
 ## 致谢
 

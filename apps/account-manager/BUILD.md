@@ -78,7 +78,7 @@ A onefile PyInstaller exe needs ~5-8 s to unpack into `%TEMP%\_MEIxxxxx`, then F
 
 - **Antivirus.** A freshly-built PyInstaller bootloader is sometimes flagged by Windows Defender / SmartScreen. Code-signing fixes this; we use a self-signed cert which helps with SmartScreen but doesn't beat AV reputation. A real Authenticode cert would be the eventual fix.
 - **Cold start.** Onefile mode unpacks ~250 MB to `%TEMP%` on every launch — first run is ~5-8 s. If we care, switch to `flet pack -D ...` (one-folder mode) — boots in <1 s but distributes as a zip.
-- **Dev path unchanged.** `python -m accounting.ui.app` still works for development; the frozen-vs-source path branch in `accounting/extractor.py` picks the right `_REPO_ROOT` automatically.
+- **Dev path unchanged.** `python -m accounting` still works for development; the frozen-vs-source path branch in `accounting/extractor.py` picks the right CLI path automatically (repo: `apps/cli/`, frozen: `sys._MEIPASS`).
 
 ## Why not Nuitka
 

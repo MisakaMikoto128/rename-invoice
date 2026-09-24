@@ -4,7 +4,7 @@
 
 <h1 align="center">invoice-cli — 右键菜单小程序 (程序 1)</h1>
 
-<p align="center">rename-invoice 的 CLI 入口: 拖放 / 双击 / Windows 经典右键菜单</p>
+<p align="center">rename-invoice 的 CLI 入口：拖放 / 双击 / Windows 经典右键菜单</p>
 
 > 本程序是 [rename-invoice monorepo](../../README.md) 的三个程序之一。
 > 负责把增值税发票 PDF 重命名为 `{价税合计}元-{原文件名}.pdf`,
@@ -12,7 +12,7 @@
 
 本目录含两个实现:
 
-- **Python 版** (`rename_invoice.py`, 本 README 主体) — 源码参考实现, 逻辑唯一权威
+- **Python 版** (`rename_invoice.py`, 本 README 主体) — 源码参考实现，逻辑唯一权威
 - **Rust 绿色版** ([rust/](./rust/README.md)) — 单 exe + pdfium.dll, 无需 Python,
   拖放/右键/双击行为与 Python 版对齐 (Slint 汇总窗口), 是日常使用的发行版
 
@@ -31,10 +31,10 @@
 ## 安装
 
 ```bash
-git clone <仓库地址> rename_invoice
-cd rename_invoice
+git clone https://github.com/MisakaMikoto128/rename-invoice.git
+cd rename-invoice/apps/cli
 pip install -r requirements.txt   # pymupdf + openpyxl
-# (可选) 注册 Windows 右键菜单
+# (可选) 注册 Windows 经典右键菜单
 .\install_context.bat
 ```
 
@@ -98,23 +98,20 @@ pip install -r requirements.txt
 
 ### 工具的安装位置
 
-工具已经放在：
+仓库克隆到哪儿，工具就在哪儿（脚本位于仓库的 `apps/cli/` 下），例如本机当前是
+`C:\Users\<用户名>\tools\rename_invoice\apps\cli\`。
 
-```text
-C:\Users\<用户名>\tools\rename_invoice\
-```
-
-> **不要随意挪动这个目录**，因为右键菜单的注册表指向的是这个绝对路径。如果一定要挪：
+> **不要随意挪动这个目录**——右键菜单的注册表指向绝对路径。如果一定要挪：
 >
 > 1. 先双击 `uninstall_context.bat`（卸载旧的右键菜单）
-> 2. 再挪动整个文件夹
-> 3. 最后双击新位置下的 `install_context.bat`（重新注册）
+> 2. 再挪动整个仓库
+> 3. 最后双击新位置 `apps/cli/` 下的 `install_context.bat`（重新注册）
 
 ### （可选）注册右键菜单
 
 只需要做**一次**：
 
-1. 双击 `C:\Users\<用户名>\tools\rename_invoice\install_context.bat`
+1. 双击 `apps/cli/install_context.bat`
 2. 回答两个独立问题（回车=否）：
    - **是否处理完后弹出 Tk 汇总窗口？** `[y/N]`（一个小窗口列出本批全部成功/跳过/失败）
    - **是否处理完后在文件夹生成 Excel 汇总？** `[y/N]`（生成 `发票汇总_<时间戳>.xlsx`）
@@ -174,23 +171,24 @@ C:\Users\<用户名>\tools\rename_invoice\
 - 自动扫描脚本所在目录下所有 PDF
 - 已经有 `XX元-` 前缀的文件**自动跳过**（幂等：重复双击没副作用）
 
-> 推荐：在 `C:\Users\<用户名>\Desktop\WorkPlace\报销\` 放一个 `rename_invoice.bat` 的快捷方式，每次需要时拖到当前批次文件夹再双击。
+> 小技巧：把 `rename_invoice.bat` 的快捷方式放到桌面或常用报销根目录，需要时拖进当前批次文件夹再双击。
 
 ### 命令行（高级用户）
 
 ```bash
-python C:\Users\<用户名>\tools\rename_invoice\rename_invoice.py "D:\path\to\folder"
-python C:\Users\<用户名>\tools\rename_invoice\rename_invoice.py "D:\path\to\file.pdf"
-python C:\Users\<用户名>\tools\rename_invoice\rename_invoice.py "D:\folder1" "D:\folder2"
+# 在本目录 (apps/cli) 下执行:
+python rename_invoice.py "D:\path\to\folder"
+python rename_invoice.py "D:\path\to\file.pdf"
+python rename_invoice.py "D:\folder1" "D:\folder2"
 
 # 静默 + 队列模式 (右键菜单走的就是这个; 一般不用直接调用)
-pythonw C:\Users\<用户名>\tools\rename_invoice\rename_invoice.py --silent "D:\path"
+pythonw rename_invoice.py --silent "D:\path"
 
 # 静默 + 处理完弹 Tk 汇总窗口
-pythonw C:\Users\<用户名>\tools\rename_invoice\rename_invoice.py --silent --summary "D:\path"
+pythonw rename_invoice.py --silent --summary "D:\path"
 
 # 静默 + 处理完导出 Excel 汇总到目标文件夹
-pythonw C:\Users\<用户名>\tools\rename_invoice\rename_invoice.py --silent --xlsx "D:\path"
+pythonw rename_invoice.py --silent --xlsx "D:\path"
 ```
 
 无参数时扫描当前工作目录。
@@ -277,7 +275,7 @@ pythonw C:\Users\<用户名>\tools\rename_invoice\rename_invoice.py --silent --x
 每次成功或失败都会追加记录到：
 
 ```text
-C:\Users\<用户名>\tools\rename_invoice\rename_invoice.log
+<仓库>\apps\cli\rename_invoice.log    (即脚本同目录)
 ```
 
 格式：
@@ -297,30 +295,19 @@ C:\Users\<用户名>\tools\rename_invoice\rename_invoice.log
 ## 文件清单
 
 ```text
-rename_invoice/
-├─ rename_invoice.py          # 核心脚本
+apps/cli/
+├─ rename_invoice.py          # 核心脚本 (三层校验逻辑的唯一实现)
 ├─ rename_invoice.bat         # 拖放/双击入口
-├─ rename_invoice.log         # 审计日志（运行后自动生成, .gitignore 已排除）
-├─ install_context.bat/.ps1   # 注册右键菜单
-├─ uninstall_context.bat/.ps1 # 卸载右键菜单
-├─ test_parser.py             # 中文大写金额解析单元测试
-├─ requirements.txt           # Python 依赖
-├─ assets/
-│  ├─ icon.ico                # 多尺寸图标（16/24/32/48/64/128/256）
-│  ├─ icon-256.png            # PNG 版本（README/网络展示用）
-│  └─ generate_icon.py        # 图标生成脚本（可重现）
-├─ .github/
-│  ├─ workflows/test.yml      # CI: Windows + Python 3.8/3.11/3.12 + BOM 检查
-│  ├─ ISSUE_TEMPLATE/         # bug 报告 / 功能建议模板
-│  └─ PULL_REQUEST_TEMPLATE.md
-├─ README.md                  # 本文档
-├─ CHANGELOG.md               # 更新日志
-├─ CONTRIBUTING.md             # 贡献指南
-├─ SECURITY.md                # 安全策略
-├─ LICENSE                    # MIT
-├─ .gitignore
-└─ .gitattributes             # 锁定行尾（.bat=CRLF, .ps1=CRLF, .py=LF）
+├─ rename_invoice.log         # 审计日志（运行后自动生成, 不入库）
+├─ install_context.bat/.ps1   # 注册经典右键菜单
+├─ uninstall_context.bat/.ps1 # 卸载经典右键菜单
+├─ test_parser.py             # 中文大写金额解析单元测试 (15 例)
+├─ requirements.txt           # Python 依赖 (pymupdf + openpyxl)
+├─ assets/icon.ico            # 多尺寸图标（16~256）
+└─ rust/                      # Rust 绿色版实现 (单 exe + pdfium.dll, 详见其 README)
 ```
+
+仓库级文件（CHANGELOG / CONTRIBUTING / CI 配置等）见[仓库根目录](../../README.md)。
 
 
 ---
@@ -332,7 +319,7 @@ rename_invoice/
 正常情况下脚本最后会等你按回车。如果一闪而过：
 
 - 可能是 Python 没装或不在 PATH 里
-- 在命令行手动跑 `python C:\Users\<用户名>\tools\rename_invoice\rename_invoice.py` 看具体报错
+- 在命令行手动跑 `python rename_invoice.py`（在本目录下）看具体报错
 
 ### `python` 命令不识别
 
@@ -344,7 +331,7 @@ rename_invoice/
 
 1. `Win + R` → `sysdm.cpl` → 高级 → 环境变量
 2. 用户变量 / 系统变量里的 `Path` → 编辑
-3. 添加 Python 安装路径，例如 `C:\Users\<用户名>\AppData\Local\Programs\Python\Python311\`
+3. 添加 Python 的安装目录（如 `C:\Users\<你的用户名>\AppData\Local\Programs\Python\Python311\`）
 4. 重新打开命令行
 
 ### 右键菜单没有出现
@@ -373,9 +360,9 @@ rename_invoice/
 
 工具不带撤销功能（YAGNI），但日志够用：
 
-```bash
-# 在 PowerShell 里，根据日志反向重命名（仅做演示，自己改路径）
-Get-Content "C:\Users\<用户名>\tools\rename_invoice\rename_invoice.log" |
+```powershell
+# 根据审计日志反向重命名（仅做演示，自己改路径）
+Get-Content "<仓库>\apps\cli\rename_invoice.log" |
   Select-String "OK\s+(.+?\.pdf)\s+->\s+(.+?\.pdf)" |
   ForEach-Object { ... }
 ```
@@ -396,7 +383,7 @@ pip install --upgrade pymupdf
 ### 完全卸载
 
 1. 双击 `uninstall_context.bat`（清除右键菜单）
-2. 删除 `C:\Users\<用户名>\tools\rename_invoice\` 整个目录
+2. 删除整个仓库目录
 3. （可选）`pip uninstall pymupdf`
 
 被改名的 PDF 文件保留原状，不会被反向恢复。
@@ -420,14 +407,16 @@ pip install --upgrade pymupdf
 
 ### Q：为什么不做 GUI？
 
-YAGNI。三种命令式入口已经覆盖所有场景。需要可视反馈时，安装时把"汇总窗口"那一问选 `y` 即可（Tk 自带，零依赖）。
+CLI 本身 YAGNI——三种命令式入口已覆盖所有场景，可视反馈用安装时可选的"汇总窗口"（Tk 自带，零依赖）。
+跨批次管理需求由仓库里的另一个程序 [account-manager](../account-manager/README.md) 承担；
+Windows 11 新式右键菜单需求由 [explorer-extension](../explorer-extension/README.md) 承担。
 
 ### Q：右键之后什么都没发生，是不是工具坏了？
 
 默认装的是**纯静默模式**，处理无窗口、无声音。验证方式：
 
 1. 看文件名是否多了 `XX元-` 前缀
-2. 打开 `C:\Users\<用户名>\tools\rename_invoice\rename_invoice.log` 看最近的记录
+2. 打开本目录下的 `rename_invoice.log` 看最近的记录
 
 如果都没有变化，重新双击 `install_context.bat`，第一问回 `y`（汇总窗口），下次右键就会弹窗告诉你结果。
 
@@ -454,7 +443,7 @@ new_name = f'{amount_str}元-{name}'
 ### Q：怎么验证脚本本身没坏？
 
 ```bash
-cd C:\Users\<用户名>\tools\rename_invoice
+cd apps/cli
 python test_parser.py
 ```
 
@@ -469,7 +458,7 @@ python test_parser.py
 - **为什么右键菜单走 pythonw.exe + 文件锁队列？** Windows 注册表 verb 模型每选一个文件就启一次进程；用 `pythonw.exe` 直接调可以零 cmd 窗口闪烁，并发的 N 个进程通过 `.queue.txt` + `msvcrt.locking` 选出一个 leader 统一处理 —— 避免 N 张发票产生 N 条日志批次或 N 个汇总窗口。
 - **为什么销售方名称用坐标判断而不是文本顺序？** PyMuPDF 的文本提取顺序在不同发票布局里不一致（旧版"label 在前 / value 在后"和新版"label-value 同行"），但所有增值税发票都遵循"购方左 / 销方右"的版式约定。判断公司名块的水平中点 vs 页面中线是最稳的。
 - **为什么用** `.bat` 而不是 `.ps1` 当主入口？ PowerShell 默认 ExecutionPolicy 限制要绕，`.bat` 双击直接跑。注册表的右键命令也一致用 `.bat`。
-- **为什么用 HKCU 不用 HKLM？** 不需要管理员，不污染其他账户。坏处是别的 Windows 账户登录看不到这个右键菜单（你是单用户机器，无所谓）。
+- **为什么用 HKCU 不用 HKLM？** 不需要管理员权限，不污染其他账户。代价是其他 Windows 账户登录看不到这个右键菜单——单用户机器无所谓。
 - **为什么不做撤销？** 重命名是纯前缀添加，原始信息没丢失，手动改回比写撤销逻辑还快。带撤销反而引入复杂度和数据丢失风险。
 - **为什么** `.ps1` 一定要 UTF-8 with BOM？ Windows PowerShell 5.1 读取无 BOM 文件时按系统 ANSI 代码页（中文版的 GBK）解释，会把 UTF-8 中文字节误读成乱码、甚至触发语法错误。PowerShell 7+ 没这问题，但 5.1 是 Win10/11 默认 PowerShell。
 
