@@ -8,7 +8,8 @@
 
 - 🐛 **Bug 报告**：发票样本无法正确识别的实际案例
 - 💡 **新发票格式支持**：新版票据格式、其他类型的发票（火车票、机票等）
-- ✅ **测试用例**：增加 `test_parser.py` 的边界覆盖
+- ✅ **测试用例**：增加中文大写金额解析的边界覆盖
+- 🔌 **explorer-extension**：Rust COM 扩展的改进（需了解 IExplorerCommand）
 - 📝 **文档改进**：使用说明、故障排查
 - 🌐 **国际化**：英文文档、其他财务格式（如港澳台、海外）
 
@@ -36,7 +37,14 @@ pip install -r requirements.txt
 ### 2. 单元测试是底线
 
 ```bash
-python test_parser.py
+# CLI (中文大写金额解析)
+cd apps/cli && python test_parser.py
+
+# account-manager (94 个单元测试)
+cd apps/account-manager && pytest tests/
+
+# explorer-extension (Rust)
+cd apps/explorer-extension && cargo clippy --release && cargo build --release
 ```
 
 必须看到 `15 passed, 0 failed`（或更多）。

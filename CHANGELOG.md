@@ -4,6 +4,34 @@
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-25
+
+### Added — 仓库重构为三程序 monorepo + Windows 11 资源管理器插件
+
+- **explorer-extension (程序 3)**: Rust 编写的 IExplorerCommand COM DLL,
+  经稀疏 MSIX 包注册进 Windows 11 **顶层**右键菜单 (带图标), 对比经典 verb:
+  - 多选 N 个文件 Invoke 只触发一次 (不再依赖文件锁合并 N 次进程)
+  - 选中项没有 PDF/文件夹时命令自动隐藏 (GetState 过滤)
+  - 支持文件 / 文件夹 / 空白处三种右键上下文
+  - 开发者模式下 `install.ps1` 全程免证书免 UAC; 未开启则自签证书兜底
+- `tools/shell-ext-manager.ps1` 收编: 排查/禁用/恢复系统 shell 扩展
+- `docs/ARCHITECTURE.md`: 三程序拓扑与设计约束
+- `apps/explorer-extension/scripts/test-com.ps1`: COM 冒烟测试 (CoCreate +
+  GetTitle/GetIcon/GetCanonicalName/GetState)
+
+### Changed — 破坏性: 目录结构调整
+
+- 仓库重组为 monorepo: `rename_invoice.py` 等 → `apps/cli/`;
+  `accounting/`、`build.py` → `apps/account-manager/`; 测试随迁
+  (git mv 保留历史)。**注意: 右键菜单注册的是绝对路径, 拉取后需要重跑
+  `apps/cli/install_context.bat` (老系统) 或 explorer-extension 的
+  `install.ps1` (Win11 现代菜单)**
+- requirements 拆分: `apps/cli/requirements.txt` (pymupdf/openpyxl)、
+  `apps/account-manager/requirements.txt` (flet/...)、根目录聚合入口
+- CI 拆三段: cli 测试 / account-manager 测试 / cargo build
+- `accounting/extractor.py` 的跨程序 import 指向新的 `apps/cli/` 路径
+- 图标随程序复制到各自 `assets/` 目录 (安装脚本自包含)
+
 ## [1.0.0] - 2026-05-10
 
 ### Added — 第一个面向终端用户的发布

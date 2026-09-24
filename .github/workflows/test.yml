@@ -7,12 +7,12 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  test-cli:
+    name: Python - invoice-cli
     runs-on: windows-latest
     strategy:
       matrix:
         python-version: ['3.8', '3.11', '3.12']
-
     steps:
       - uses: actions/checkout@v4
 
@@ -24,15 +24,48 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r apps/cli/requirements.txt
+
+      - name: Run parser tests (中文大写金额校验)
+        working-directory: apps/cli
+        run: python test_parser.py
+
+  test-account-manager:
+    name: Python - account-manager
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r apps/account-manager/requirements.txt
+          pip install pytest
 
       - name: Run unit tests
-        run: python test_parser.py
+        working-directory: apps/account-manager
+        run: pytest tests/ -q
 
       - name: Verify .ps1 files have UTF-8 BOM
         shell: pwsh
         run: |
-          $files = @('install_context.ps1', 'uninstall_context.ps1')
+          $files = @(
+            'apps/cli/install_context.ps1',
+            'apps/cli/uninstall_context.ps1',
+            'apps/explorer-extension/scripts/install.ps1',
+            'apps/explorer-extension/scripts/uninstall.ps1',
+            'apps/explorer-extension/scripts/build.ps1',
+            'apps/explorer-extension/scripts/test-com.ps1',
+            'tools/shell-ext-manager.ps1'
+          )
           foreach ($f in $files) {
             $bytes = [System.IO.File]::ReadAllBytes($f)
             if ($bytes[0] -ne 0xEF -or $bytes[1] -ne 0xBB -or $bytes[2] -ne 0xBF) {
@@ -41,3 +74,17 @@ jobs:
             }
             Write-Host "[OK] $f has UTF-8 BOM"
           }
+
+  build-explorer-extension:
+    name: Rust - explorer-extension
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build DLL (release)
+        working-directory: apps/explorer-extension
+        run: cargo build --release --verbose
+
+      - name: Clippy
+        working-directory: apps/explorer-extension
+        run: cargo clippy --release -- -D warnings
