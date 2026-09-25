@@ -79,3 +79,4 @@ tests/_pdf_samples/
 # build.py 输出 + 自签名证书
 release/
 build_sign.pfx
+apps/account-manager/.sign/

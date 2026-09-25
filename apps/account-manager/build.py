@@ -54,7 +54,7 @@ EXCLUDES = [
     "zmq", "debugpy", "tornado", "dill", "fontTools",
 ]
 
-CERT_PFX = SCRIPT_DIR / "build_sign.pfx"
+CERT_PFX = SCRIPT_DIR / ".sign" / "build_sign.pfx"
 CERT_PWD = "AcctMgr_Build_Sign!"
 
 
