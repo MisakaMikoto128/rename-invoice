@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>rename-invoice — 中国增值税电子发票工具箱</title>
-<meta name="description" content="三个程序, 一套校验逻辑: 右键菜单小程序 / 本地账目管理 / Windows 11 资源管理器插件。把发票 PDF 重命名为 {价税合计}元-原文件名.pdf, 方便报销。">
+<meta name="description" content="三个程序，一套校验逻辑：右键菜单小程序 / 本地账目管理 / Windows 11 资源管理器插件。把发票 PDF 重命名为 {价税合计}元-原文件名.pdf，方便报销。">
 <link rel="icon" type="image/png" href="assets/icon-256.png">
 <link rel="stylesheet" href="assets/style.css">
 </head>
@@ -30,7 +30,7 @@
 <section class="hero">
   <div class="hero-inner">
     <h1><img class="hero-icon" src="assets/icon-256.png" alt="">rename-invoice</h1>
-    <p class="tagline">中国增值税电子发票工具箱 — 把发票 PDF 重命名成 <code>{价税合计}元-{原文件名}.pdf</code>,<br>报销时一眼看到金额。100% 离线，零联网。</p>
+    <p class="tagline">中国增值税电子发票工具箱 — 把发票 PDF 重命名成 <code>{价税合计}元-{原文件名}.pdf</code>，报销时一眼看到金额。100% 离线，零联网。</p>
     <div class="rename-demo">
       <div class="demo-file">某某科技有限公司_20260416104223.pdf</div>
       <div class="demo-arrow">↓ 自动提取价税合计 + 三层校验</div>
@@ -47,15 +47,15 @@
 <!-- ============ 三个程序 ============ -->
 <section id="programs">
   <h2>三个程序</h2>
-  <p class="section-lead">一一套校验逻辑，三种打开方式。核心金额提取代码只有一份，结果完全一致。/p>
+  <p class="section-lead">一套校验逻辑，三种打开方式。核心金额提取代码只有一份，结果完全一致。</p>
   <div class="cards">
     <div class="card">
       <div class="card-num">1</div>
       <h3>invoice-cli<br><small>右键菜单小程序</small></h3>
-      <p>拖放 拖放 / 双击 / 经典右键菜单。三层金额校验逻辑的唯一实现，也是整个项目的技术核心。>
+      <p>拖放 / 双击 / 经典右键菜单。三层金额校验逻辑的唯一实现，也是整个项目的技术核心。</p>
       <ul>
-        <li>Python 3.8+ (核心) + Rust 绿色版</li>
-        <li>零弹窗静零弹窗静默处理，审计日志可回溯>
+        <li>Python 3.8+（核心）+ Rust 绿色版</li>
+        <li>零弹窗静默处理，审计日志可回溯</li>
         <li>可选 Excel 汇总 / 汇总窗口</li>
       </ul>
       <a href="#install-cli">安装指南 →</a>
@@ -63,17 +63,19 @@
     <div class="card">
       <div class="card-num">2</div>
       <h3>account-manager<br><small>本地账目管理</small></h3>
-      <p>桌面 GU桌面 GUI: 项目化管理报销批次，表格内直接编辑备注、淘宝单号、报销状态，一键导出。      <ul>
-        <li>免 Python, 下载 exe 即用</li>
+      <p>桌面 GUI：项目化管理报销批次，表格内直接编辑备注、淘宝单号、报销状态，一键导出。</p>
+      <ul>
+        <li>免 Python，下载 exe 即用</li>
         <li>跨项目搜索 / 回收站 / 深浅主题</li>
-        <li>导出 xlsx (带公式) / zip 打包</li>
+        <li>导出 xlsx（带公式）/ zip 打包</li>
       </ul>
       <a href="#install-gui">安装指南 →</a>
     </div>
     <div class="card">
       <div class="card-num">3</div>
       <h3>explorer-extension<br><small>资源管理器插件</small></h3>
-      <p>WindowsWindows 11 顶层右键菜单直达，带图标。比"显示更多选项"里的经典菜单快得多。    <ul>
+      <p>Windows 11 顶层右键菜单直达，带图标。比"显示更多选项"里的经典菜单快得多。</p>
+      <ul>
         <li>多选 N 个文件只触发一次处理</li>
         <li>选中项无关时菜单自动隐藏</li>
         <li>文件 / 文件夹 / 空白处全覆盖</li>
@@ -85,9 +87,9 @@
     <table>
       <thead><tr><th>场景</th><th>推荐</th></tr></thead>
       <tbody>
-        <tr><td>偶尔处理一批发票偶尔处理一批发票，用完即走>程序 1 (拖放 / 双击)</td></tr>
-        <tr><td>Windows 11, 想要最顺手的一键处理</td><td>程序 3 (顶层右键菜单)</td></tr>
-        <tr><td>管理整月报销, 要管理整月报销，要填备注 / 淘宝单号 / 报销状态程序 2 (GUI)</td></tr>
+        <tr><td>偶尔处理一批发票，用完即走</td><td>程序 1（拖放 / 双击）</td></tr>
+        <tr><td>Windows 11，想要最顺手的一键处理</td><td>程序 3（顶层右键菜单）</td></tr>
+        <tr><td>管理整月报销，要填备注 / 淘宝单号 / 报销状态</td><td>程序 2（GUI）</td></tr>
         <tr><td>老板要 Excel 汇总</td><td>程序 1 <code>--xlsx</code> 或程序 2 导出</td></tr>
       </tbody>
     </table>
@@ -97,17 +99,19 @@
 <!-- ============ 下载 ============ -->
 <section id="download">
   <h2>下载</h2>
-  <p class="section-lead">只有程序 2 提供免只有程序 2 提供免安装 exe; 程序 1 和 3 随源码分发，按下面的安装指南启用。iv class="download-grid">
+  <p class="section-lead">只有程序 2 提供免安装 exe；程序 1 和 3 随源码分发，按下面的安装指南启用。</p>
+
+  <div class="download-grid">
     <div class="dl-card dl-primary">
       <h3>AccountManager.exe <span class="badge">推荐 · 程序 2</span></h3>
       <p class="dl-meta">约 106 MB · 单文件 · Windows 10/11 · 不需要 Python</p>
       <a class="btn btn-primary" href="https://github.com/MisakaMikoto128/rename-invoice/releases/latest/download/AccountManager.exe">直接下载最新版</a>
       <a class="btn" href="https://github.com/MisakaMikoto128/rename-invoice/releases" target="_blank" rel="noopener">全部历史版本</a>
-      <p class="dl-tip">下载慢? 把链接里 <code>github.com</code> 前面加上 <code>https://gh-proxy.com/</code> 前缀可加速。</p>
+      <p class="dl-tip">下载慢？把链接里 <code>github.com</code> 前面加上 <code>https://gh-proxy.com/</code> 前缀可加速。</p>
     </div>
     <div class="dl-card">
-      <h3>源码 (含程序 1 / 3)</h3>
-      <p class="dl-meta">git clone 或下载 zip · 约 1 MB (不含构建产物)</p>
+      <h3>源码（含程序 1 / 3）</h3>
+      <p class="dl-meta">git clone 或下载 zip · 约 1 MB（不含构建产物）</p>
       <div class="code-block"><pre><code>git clone https://github.com/MisakaMikoto128/rename-invoice.git</code></pre></div>
       <a class="btn" href="https://github.com/MisakaMikoto128/rename-invoice/archive/refs/heads/main.zip">下载源码 zip</a>
     </div>
@@ -122,17 +126,18 @@
   <div class="install-block" id="install-gui">
     <h3><span class="pill pill-2">程序 2</span> account-manager — 双击即用</h3>
     <ol class="steps">
-      <li><strong>下载</strong> <a href="https://github.com/MisakaMikoto128/rename-invoice/releases/latest/download/AccountManager.exe">AccountManager.exe</a> (约 106 MB)。</li>
-      <li><strong>双击运行</strong>。第一次启动需要 5-10 秒 (应用在解包)。</li>
-      <li>若弹出 <strong>Windows SmartScreen</strong> 警告 ("Windows 已保护你的电脑"): 点 <em>更多信息</em> → <em>仍要运行</em>。exe 没有购买代码。exe 没有购买代码签名证书，不是病毒。个别杀毒软件误报 PyInstaller 打包的程序，加白名单即可。/ol>
+      <li><strong>下载</strong> <a href="https://github.com/MisakaMikoto128/rename-invoice/releases/latest/download/AccountManager.exe">AccountManager.exe</a>（约 106 MB）。</li>
+      <li><strong>双击运行</strong>。第一次启动需要 5-10 秒（应用在解包）。</li>
+      <li>若弹出 <strong>Windows SmartScreen</strong> 警告（"Windows 已保护你的电脑"）：点 <em>更多信息</em> → <em>仍要运行</em>。exe 没有购买代码签名证书，不是病毒。个别杀毒软件误报 PyInstaller 打包的程序，加白名单即可。</li>
+    </ol>
     <div class="note">
-      <strong>数据存放位置</strong> (备份只需要拷走这一个文件夹):
-      数据库 <code>%APPDATA%\rename-invoice\accounts.db</code> (SQLite)、
+      <strong>数据存放位置</strong>（备份只需要拷走这一个文件夹）：
+      数据库 <code>%APPDATA%\rename-invoice\accounts.db</code>（SQLite）、
       项目 PDF <code>%APPDATA%\rename-invoice\projects\</code>、
       设置 <code>%APPDATA%\rename-invoice\settings.json</code>。
-      卸载 = 。
       卸载 = 删 exe + 上述文件夹，注册表零残留。
-    v>
+    </div>
+  </div>
 
   <!-- CLI -->
   <div class="install-block" id="install-cli">
@@ -140,36 +145,36 @@
     <h4>前提条件</h4>
     <ul class="plain">
       <li>Windows 10 / 11</li>
-      <li>Python 3.8+ 已安装并在 PATH 里 (<code>python --version</code> 能出版本号)</li>
+      <li>Python 3.8+ 已安装并在 PATH 里（<code>python --version</code> 能出版本号）</li>
     </ul>
     <ol class="steps">
-      <li><strong>获取源码</strong>:
+      <li><strong>获取源码</strong>：
         <div class="code-block"><pre><code>git clone https://github.com/MisakaMikoto128/rename-invoice.git
 cd rename-invoice/apps/cli</code></pre></div>
       </li>
-      <li><strong>安装依赖</strong> (pymupdf 解析 PDF + openpyxl 导出 Excel):
+      <li><strong>安装依赖</strong>（pymupdf 解析 PDF + openpyxl 导出 Excel）：
         <div class="code-block"><pre><code>pip install -r requirements.txt</code></pre></div>
       </li>
-      <li><strong>(可选) 注册经典右键菜单</strong> — 双击 <code>install_context.bat</code>, 回答两个独立问题 (直接回车 = 否):
+      <li><strong>（可选）注册经典右键菜单</strong> — 双击 <code>install_context.bat</code>，回答两个独立问题（直接回车 = 否）：
         <div class="table-wrap">
           <table>
-            <thead><tr><th>汇总窗口?</th><th>Excel 汇总?</th><th>右键后的行为</th></tr></thead>
+            <thead><tr><th>汇总窗口？</th><th>Excel 汇总？</th><th>右键后的行为</th></tr></thead>
             <tbody>
-              <tr><td>N</td><td>N</td><td>纯静默, 结果只写审计日志 纯静默，结果只写审计日志 (推荐默认)           <tr><td>Y</td><td>N</td><td>静默 + 处理完弹汇总窗口</td></tr>
+              <tr><td>N</td><td>N</td><td>纯静默，结果只写审计日志（推荐默认）</td></tr>
+              <tr><td>Y</td><td>N</td><td>静默 + 处理完弹汇总窗口</td></tr>
               <tr><td>N</td><td>Y</td><td>静默 + 生成 <code>发票汇总_时间戳.xlsx</code></td></tr>
               <tr><td>Y</td><td>Y</td><td>汇总窗口 + Excel 汇总都开启</td></tr>
             </tbody>
           </table>
         </div>
-        想换组合, 
-        想换组合，随时再双击一次 ontext.bat</code> 即可。卸载用 <code>uninstall_context.bat</code>。
+        想换组合，随时再双击一次 <code>install_context.bat</code> 即可。卸载用 <code>uninstall_context.bat</code>。
       </li>
     </ol>
     <div class="note warning">
-      <strong>不要移动仓库目录</strong> — 右键菜单注册的是绝对路径。必须移动时:
+      <strong>不要移动仓库目录</strong> — 右键菜单注册的是绝对路径。必须移动时：
       先 <code>uninstall_context.bat</code> → 移动 → 新位置重跑 <code>install_context.bat</code>。
     </div>
-    <p>Rust 绿色版 (单 exe, 免 Python) 的构建与用法见仓库 <code>apps/cli/rust/README.md</code>。</p>
+    <p>Rust 绿色版（单 exe，免 Python）的构建与用法见仓库 <code>apps/cli/rust/README.md</code>。</p>
   </div>
 
   <!-- Extension -->
@@ -177,30 +182,25 @@ cd rename-invoice/apps/cli</code></pre></div>
     <h3><span class="pill pill-3">程序 3</span> explorer-extension — 一条命令装进 Win11 右键菜单</h3>
     <h4>前提条件</h4>
     <ul class="plain">
-      <li>Windows 11 21H2+ (build 22000+, 没有现代右键菜单的老系统用程序 1 即可)</li>
-      <li>Python (作为右键菜单的处Python (作为右键菜单的处理器；或用 ode> 指定独立 exe)</li>
-      <li>Rust 工具链 (仅首次构建 DLL 时) + Windows SDK (makeappx / signtool)</li>
+      <li>Windows 11 21H2+（build 22000+，没有现代右键菜单的老系统用程序 1 即可）</li>
+      <li>Python（作为右键菜单的处理器；或用 <code>-CliExe</code> 指定独立 exe）</li>
+      <li>Rust 工具链（仅首次构建 DLL 时）+ Windows SDK（makeappx / signtool）</li>
     </ul>
     <ol class="steps">
-      <li><strong>一键安装</strong>:
+      <li><strong>一键安装</strong>：
         <div class="code-block"><pre><code>cd rename-invoice\apps\explorer-extension\scripts
 .\install.ps1</code></pre></div>
-        脚本自动完成: 
         脚本自动完成：构建 DLL → 写注册表 CLI 配置 → 打包 → 注册稀疏 MSIX 包。
-      strong>注册方式二选一</strong> (脚本自动判断):
+      </li>
+      <li><strong>注册方式二选一</strong>（脚本自动判断）：
         <ul class="plain">
-          <li><strong>开发者模式开启</strong> (设置 → 隐私和安全性 → 开发者选项):
-            直接注册, <strong>免签名、免证书、免 UAC</strong>。</li>
-          <li><strong>未开启</strong>: 自动生成自签证书 <code>CN=rename-invoice</code> 并签名,
-            导入 TrustedPeople 时弹一次 UAC。</li>
+          <li><strong>开发者模式开启</strong>（设置 → 隐私和安全性 → 开发者选项）：直接注册，<strong>免签名、免证书、免 UAC</strong>。</li>
+          <li><strong>未开启</strong>：自动生成自签证书 <code>CN=rename-invoice</code> 并签名，导入 TrustedPeople 时弹一次 UAC。</li>
         </ul>
       </li>
-      <li><strong>验证</strong>: 右键任意 PDF 或文件夹 — 现代菜单顶层出现 <em>添加发票价格前缀</em> (带图标)。
-        看不到时重启一次 explorer.exe 或重开资源管理器窗口。</li>
+      <li><strong>验证</strong>：右键任意 PDF 或文件夹 — 现代菜单顶层出现 <em>添加发票价格前缀</em>（带图标）。看不到时重启一次 explorer.exe 或重开资源管理器窗口。</li>
     </ol>
-    <p>卸载: <code>.\uninstall.ps1</code> (加 <code>-RemoveCert</code> 连证书一起清掉)。
-      与 连证书一起清掉)。
-      与程序 1 的经典菜单可共存；仓库移动后需重跑 /code>。</p>
+    <p>卸载：<code>.\uninstall.ps1</code>（加 <code>-RemoveCert</code> 连证书一起清掉）。与程序 1 的经典菜单可共存；仓库移动后需重跑 <code>install.ps1</code>。</p>
   </div>
 </section>
 
@@ -213,94 +213,122 @@ cd rename-invoice/apps/cli</code></pre></div>
     <div class="usage-grid">
       <div class="usage-item">
         <h4>方式 A · 拖放</h4>
-        <p>把 PDF 或整个文件夹拖到 <code>rename_invoice.bat</code> 上。拖文件夹 = 处理其中所有 PDF (不含子目录)。支持中文、空格路径。</p>
+        <p>把 PDF 或整个文件夹拖到 <code>rename_invoice.bat</code> 上。拖文件夹 = 处理其中所有 PDF（不含子目录）。支持中文、空格路径。</p>
       </div>
       <div class="usage-item">
         <h4>方式 B · 经典右键菜单</h4>
-        <p>在 PDF 文件 (可多选)、文件夹图标、文件夹空白处右键 → <em>添加发票价格前缀</em>。Windows 11 需点"显示更多选项" (或按 <kbd>Shift</kbd>+<kbd>F10</kbd>)。多选 N 个文件由文件锁合并为一次)。多选 N 个文件由文件锁合并为一次处理，只产生一条日志批次。     <div class="usage-item">
+        <p>在 PDF 文件（可多选）、文件夹图标、文件夹空白处右键 → <em>添加发票价格前缀</em>。Windows 11 需点"显示更多选项"（或按 <kbd>Shift</kbd>+<kbd>F10</kbd>）。多选 N 个文件由文件锁合并为一次处理，只产生一条日志批次。</p>
+      </div>
+      <div class="usage-item">
         <h4>方式 C · 双击当前目录</h4>
-        <p>把 <code>rename_invoice.bat</code> (或快捷方式) 放进报销文件夹, 双击 (或快捷方式) 放进报销文件夹，双击即扫描本目录全部 PDF。已加前缀的文件自动跳过 — 重复双击无副作用。    <div class="usage-item">
+        <p>把 <code>rename_invoice.bat</code>（或快捷方式）放进报销文件夹，双击即扫描本目录全部 PDF。已加前缀的文件自动跳过 — 重复双击无副作用。</p>
+      </div>
+      <div class="usage-item">
         <h4>命令行参考</h4>
         <div class="code-block"><pre><code>python rename_invoice.py "D:\报销\7月"
 python rename_invoice.py 发票1.pdf 发票2.pdf
 pythonw rename_invoice.py --silent --summary --xlsx "D:\报销\7月"</code></pre></div>
-        <p><code>--silent</code> 静默队列 (右键菜单内部用的就是它); <code>--summary</code> 处理完弹汇总窗口; <code>--xlsx</code> 在目标文件夹生成带合计公式的 <code>发票汇总_时间戳.xlsx</code>。</p>
+        <p><code>--silent</code> 静默队列（右键菜单内部用的就是它）；<code>--summary</code> 处理完弹汇总窗口；<code>--xlsx</code> 在目标文件夹生成带合计公式的 <code>发票汇总_时间戳.xlsx</code>。</p>
       </div>
     </div>
     <div class="note">
-      <strong>处理结果</strong>: 成功 → 文件名加 <code>98.01元-</code> 前缀; 已有前缀 → 跳过;
-      前缀；已有前缀 → 跳过;
-      校验不过 → g>, 红色提示原因, 记入审计日志
-     , 红色提示原因，记入审计日志
-      invoice.log</code> (含成功/失败/跳过全记录, 可反查)。
-  (含成功/失败/跳过全记录，可反查)。
-     class="usage-block" id="usage-gui">
+      <strong>处理结果</strong>：成功 → 文件名加 <code>98.01元-</code> 前缀；已有前缀 → 跳过；
+      校验不过 → <strong>保持原名不动</strong>，红色提示原因，记入审计日志
+      <code>apps/cli/rename_invoice.log</code>（含成功/失败/跳过全记录，可反查）。
+    </div>
+  </div>
+
+  <div class="usage-block" id="usage-gui">
     <h3><span class="pill pill-2">程序 2</span> account-manager</h3>
     <ol class="steps">
-      <li><strong>新建项目</strong> — 主窗口左上角"+ 新建项目" → 输入项目名 (比如"11月报销") → 自动创建文件夹。每个报销批次建议一个项目。</li>
-      <li><strong>导入 PDF</strong> — 进入项目 →"+ 导入 PDF"或"导入文 — 进入项目 →"+ 导入 PDF"或"导入文件夹"批量导入。自动提取发票号 / 开票日期 / 销售方 / 金额，按发票号去重；也支持无 PDF 的手工录入。编辑跟踪</strong> — 表格点单元格直接改备注 / 淘宝单号 / 金额 — 表格点单元格直接改备注 / 淘宝单号 / 金额；状态下拉切换 未报销 / 报销中 / 已报销；状态 chips 一键过滤；备注或单号空着的行有黄色提醒。</strong> —"导出 xlsx"(合计是公式, 改金额自动重算, 人 —"导出 xlsx"(合计是公式，改金额自动重算，人民币货币格式) 或"导出 zip"(打包全部 PDF + 可选 Excel)。备注 / 淘宝单号两列留空列手填。局搜索、项目回收站 (软删除可恢复)、黑暗模式、窗口大小记忆、PDF 存储位置迁移 (⚙️ 设置)。</p>
+      <li><strong>新建项目</strong> — 主窗口左上角"+ 新建项目" → 输入项目名（比如"11月报销"）→ 自动创建文件夹。每个报销批次建议一个项目。</li>
+      <li><strong>导入 PDF</strong> — 进入项目 →"+ 导入 PDF"或"导入文件夹"批量导入。自动提取发票号 / 开票日期 / 销售方 / 金额，按发票号去重；也支持无 PDF 的手工录入。</li>
+      <li><strong>编辑跟踪</strong> — 表格点单元格直接改备注 / 淘宝单号 / 金额；状态下拉切换 未报销 / 报销中 / 已报销；状态 chips 一键过滤；备注或单号空着的行有黄色提醒。</li>
+      <li><strong>导出</strong> —"导出 xlsx"（合计是公式，改金额自动重算，人民币货币格式）或"导出 zip"（打包全部 PDF + 可选 Excel）。备注 / 淘宝单号两列留空列手填。</li>
+    </ol>
+    <p>另有跨项目全局搜索、项目回收站（软删除可恢复）、黑暗模式、窗口大小记忆、PDF 存储位置迁移（⚙️ 设置）。</p>
   </div>
 
   <div class="usage-block" id="usage-ext">
     <h3><span class="pill pill-3">程序 3</span> explorer-extension</h3>
-    <p>装好后没有界面 — 它活在右键菜单里:</p>
+    <p>装好后没有界面 — 它活在右键菜单里：</p>
     <ul class="plain">
-      <li><strong>右键 PDF (可多选)</strong> → 顶层 <em>添加发票价格前缀</em> → 全部选中项一次处理。</li>
+      <li><strong>右键 PDF（可多选）</strong> → 顶层 <em>添加发票价格前缀</em> → 全部选中项一次处理。</li>
       <li><strong>右键文件夹 / 空白处</strong> → 处理该文件夹下所有 PDF。</li>
-      <li>选中项里没有任何 PDF 或文件夹时, 命令自动从菜单隐藏, 选中项里没有任何 PDF 或文件夹时，命令自动从菜单隐藏，不碍眼。(同一个 CLI、同一份审计日志)。</li>
+      <li>选中项里没有任何 PDF 或文件夹时，命令自动从菜单隐藏，不碍眼。</li>
+      <li>处理结果与程序 1 完全一致（同一个 CLI、同一份审计日志）。</li>
     </ul>
   </div>
 </section>
 
 <!-- ============ 可靠性 ============ -->
 <section id="reliability">
-  <h2>可靠性: 为什么敢用在报销文件上</h2>
-  <p class=可靠性：为什么敢用在报销文件上额错认就是真金白银的损失 (98.01 看成 980.10 就是事金额错认就是真金白银的损失 (98.01 看成 980.10 就是事故)。每张发票必须通过三层校验，任何一层不确定就拒绝重命名。  <div class="reli">
+  <h2>可靠性：为什么敢用在报销文件上</h2>
+  <p class="section-lead">金额错认就是真金白银的损失（98.01 看成 980.10 就是事故）。每张发票必须通过三层校验，任何一层不确定就拒绝重命名。</p>
+  <div class="reli-steps">
+    <div class="reli">
       <div class="reli-num">1</div>
       <div>
         <h4>双重金额一致性</h4>
-        <p>每张增值税发票都有两个法律等价的金额: 价税合计(小写) <code>每张增值税发票都有两个法律等价的金额：价税合计(小写) e>玖拾捌圆零壹分</code>。工具同时提取两者, 要求精确匹配 (容差 0.005 元, 等同到分精。工具同时提取两者，要求精确匹配 (容差 0.005 元，等同到分精确比对)。v class="reli">
+        <p>每张增值税发票都有两个法律等价的金额：价税合计（小写）<code>¥98.01</code> 与 价税合计（大写）<code>玖拾捌圆零壹分</code>。工具同时提取两者，要求精确匹配（容差 0.005 元，等同到分精确比对）。</p>
+      </div>
+    </div>
+    <div class="reli">
       <div class="reli-num">2</div>
       <div>
         <h4>最大值检查</h4>
-        <p>价税合计 = 金额 + 税额, 必然是票面最大的 ¥ 值。若大写转换值不是最价税合计 = 金额 + 税额，必然是票面最大的 ¥ 值。若大写转换值不是最大 ¥ 值，说明可能错认到了"金额"或"税额"行 — 拒绝重命名。class="reli">
+        <p>价税合计 = 金额 + 税额，必然是票面最大的 ¥ 值。若大写转换值不是最大 ¥ 值，说明可能错认到了"金额"或"税额"行 — 拒绝重命名。</p>
+      </div>
+    </div>
+    <div class="reli">
       <div class="reli-num">3</div>
       <div>
         <h4>失败安全</h4>
-        <p>大写缺失 / 解析失败 / 数字不匹配 / 文件被占用 → 一律保留原文件名 + 记审计日志。目标文件名已存在时追加 <code>(2)</code>、<code>(3)</code>, 绝不覆盖。不集成 OCR — 扫描件识别错误会破坏可靠性 (先自行 OCR 成可搜索 PDF 再处理)。</p>
+        <p>大写缺失 / 解析失败 / 数字不匹配 / 文件被占用 → 一律保留原文件名 + 记审计日志。目标文件名已存在时追加 <code>(2)</code>、<code>(3)</code>，绝不覆盖。不集成 OCR — 扫描件识别错误会破坏可靠性（先自行 OCR 成可搜索 PDF 再处理）。</p>
       </div>
     </div>
   </div>
-  <p class="section-lead">中文大写金额解析器覆盖 <code>玖拾捌圆零壹分</code> 到 <code>壹亿圆整</code> 等 15 类格式 (单元测试); 全部 109 个测试由 CI 在 Windows 上自动执行。</p>
+  <p class="section-lead">中文大写金额解析器覆盖 <code>玖拾捌圆零壹分</code> 到 <code>壹亿圆整</code> 等 15 类格式（单元测试）；全部 109 个测试由 CI 在 Windows 上自动执行。</p>
 </section>
 
 <!-- ============ FAQ ============ -->
 <section id="faq">
   <h2>常见问题</h2>
   <details>
-    <summary>能处理扫描件 (图片 PDF) 吗?</summary>
+    <summary>能处理扫描件（图片 PDF）吗？</summary>
     <p>不能。先用 OCR 工具把扫描件转成可搜索 PDF。设计上故意不集成 OCR — OCR 识别错误会破坏金额可靠性。</p>
   </details>
   <details>
-    <summary>支持哪些发票类型?</summary>
-    <p>增值税专票 / 普票 / 电子普票都可以, 只要票面有"价税合计(大写)"和 <增值税专票 / 普票 / 电子普票都可以，只要票面有"价税合计(大写)"和 别第一张, 建议先拆分。</p>
-  < 字段。一个 PDF 里合并多张发票时只识别第一张，建议先拆分。y>右键之后什么都没发生, 是坏了吗?</summary>
-    <p>默认是纯静默模右键之后什么都没发生，是坏了吗?审计日志 <code>apps/cli默认是纯静默模式。先看文件名有没有加前缀；再看审计日志 次弹窗确认结果, 重跑 <code>install_context.bat</co。想每次弹窗确认结果，重跑 </p>
+    <summary>支持哪些发票类型？</summary>
+    <p>增值税专票 / 普票 / 电子普票都可以，只要票面有"价税合计（大写）"和 <code>¥XX.XX</code> 字段。一个 PDF 里合并多张发票时只识别第一张，建议先拆分。</p>
   </details>
   <details>
-    <summary>Windows 11 右键菜单里找不到 (程序 1)?</summary>
-    <p>经典菜单在"显示更多选项"里 (或按 <kbd>Shift</kbd>+<kbd>F10</kbd>)。想要顶层直达, 安装程序 3 (explorer-extension)。</p>
-  )。想要顶层直达，安装程序 3 (explorer-extension)。销重命名 / 改名规则?</summary>
-    <p>撤销: 前缀只是文件名前缀, 手动去掉即可; 审计日志里有每一条 <code>原名 → 新名撤销：前缀只是文件名前缀，手动去掉即可；审计日志里有每一条 e_invoice.py</code> 的 < 记录可反查。改名规则：改  f'{amount_str}元-{name}'</code>, 并同步 <code>ALREADY_PREFIXED_RE</code> 正则, 否则会重复加前缀。</p>
+    <summary>右键之后什么都没发生，是坏了吗？</summary>
+    <p>默认是纯静默模式。先看文件名有没有加前缀；再看审计日志 <code>apps/cli/rename_invoice.log</code>。想每次弹窗确认结果，重跑 <code>install_context.bat</code> 把"汇总窗口"选 Y。</p>
   </details>
   <details>
-    <s 正则，否则会重复加前缀。reen / 杀毒软件报警?</summary>
-    <p>exe 未购买代码签名证书, 首次运行点"更多信息 → 仍要运行"; 杀软误报 PyInstallerexe 未购买代码签名证书，首次运行点"更多信息 → 仍要运行"; 杀软误报 PyInstaller 打包程序时加白名单。介意的话可以从源码自己构建 (全部开源)。断网能用吗?</summary>
-    <p>100% 离线, 零联网, 无遥测。数据库和 PDF 全在本机, 断网一切功能可用。</p>
-  </d100% 离线，零联网，无遥测。数据库和 PDF 全在本机，断网一切功能可用。?</summary>
-    <p>先在 PDF 阅读器里对照"价税合计"确认确实错了, 再到 GitHub 提 issue 并附<strong>先在 PDF 阅读器里对照"价税合计"确认确实错了，再到 GitHub 提 issue 并附p>
+    <summary>Windows 11 右键菜单里找不到（程序 1）？</summary>
+    <p>经典菜单在"显示更多选项"里（或按 <kbd>Shift</kbd>+<kbd>F10</kbd>）。想要顶层直达，安装程序 3（explorer-extension）。</p>
   </details>
-</sect样本 (公司名、号码可涂黑，金额字段保留), 我们修提取算法。========= -->
+  <details>
+    <summary>想撤销重命名 / 修改命名规则？</summary>
+    <p>撤销：前缀只是文件名前缀，手动去掉即可；审计日志里有每一条 <code>原名 → 新名</code> 记录可反查。改名规则：改 <code>rename_invoice.py</code> 的 <code>new_name = f'{amount_str}元-{name}'</code>，并同步 <code>ALREADY_PREFIXED_RE</code> 正则，否则会重复加前缀。</p>
+  </details>
+  <details>
+    <summary>SmartScreen / 杀毒软件报警？</summary>
+    <p>exe 未购买代码签名证书，首次运行点"更多信息 → 仍要运行"；杀软误报 PyInstaller 打包程序时加白名单。介意的话可以从源码自己构建（全部开源）。</p>
+  </details>
+  <details>
+    <summary>数据会上传吗？断网能用吗？</summary>
+    <p>100% 离线，零联网，无遥测。数据库和 PDF 全在本机，断网一切功能可用。</p>
+  </details>
+  <details>
+    <summary>发票提取错了怎么办？</summary>
+    <p>先在 PDF 阅读器里对照"价税合计"确认确实错了，再到 GitHub 提 issue 并附<strong>脱敏后的</strong>样本（公司名、号码可涂黑，金额字段保留），我们修提取算法。</p>
+  </details>
+</section>
+
+<!-- ============ 故障排查 ============ -->
 <section id="troubleshooting">
   <h2>故障排查</h2>
   <div class="table-wrap">
@@ -308,14 +336,15 @@ pythonw rename_invoice.py --silent --summary --xlsx "D:\报销\7月"</code></pre
       <thead><tr><th>现象</th><th>处理</th></tr></thead>
       <tbody>
         <tr><td>双击 .bat 一闪而过</td><td>Python 未装或不在 PATH。命令行手动跑 <code>python rename_invoice.py</code> 看报错。</td></tr>
-        <tr><td>右键菜单没有出现</td><td>Win11 点"显示更多选项"; 重跑 <code>install_context.bat</code>; 检查注册表 <code>HKCU\...\SystemFileAssociations\.pdf\shell\AddInvoicePrice</code>。</td></tr>
-        <tr><td>失败: PDF 无文字层</td><td>扫描件。先用 OCR 转可搜索 PDF。</td></tr>
-        <tr><td>失败: 中文大写金额与 ¥ 值不匹配</td><td>非标准版式或文本提取错乱。PDF 阅读器里人工核对后手动改名失败：中文大写金额与 ¥ 值不匹配</td></tr>非标准版式或文本提取错乱。PDF 阅读器里人工核对后手动改名，欢迎提 issue 附脱敏样本。阅读器打开)。关闭后重试。</td></tr>
-    失败：重命名失败td>插件装完菜单没出现</td><td>重启 explorer.exe 或重开资源管理器窗口; 确认 <code>Get-AppxPackage rename-重启 explorer.exe 或重开资源管理器窗口；确认 r>
+        <tr><td>右键菜单没有出现</td><td>Win11 点"显示更多选项"；重跑 <code>install_context.bat</code>；检查注册表 <code>HKCU\...\SystemFileAssociations\.pdf\shell\AddInvoicePrice</code>。</td></tr>
+        <tr><td>失败：PDF 无文字层</td><td>扫描件。先用 OCR 转可搜索 PDF。</td></tr>
+        <tr><td>失败：中文大写金额与 ¥ 值不匹配</td><td>非标准版式或文本提取错乱。PDF 阅读器里人工核对后手动改名，欢迎提 issue 附脱敏样本。</td></tr>
+        <tr><td>失败：重命名失败</td><td>文件被占用（被 PDF 阅读器打开）。关闭后重试。</td></tr>
+        <tr><td>插件装完菜单没出现</td><td>重启 explorer.exe 或重开资源管理器窗口；确认 <code>Get-AppxPackage rename-invoice-ext</code> 已注册。</td></tr>
       </tbody>
     </table>
   </div>
-  <p>更多细节见仓库文档: <a href="https://github.com/MisakaMikoto128/rename-invoice/blob/main/apps/cli/README.md">apps/cli/README.md</a> ·
+  <p>更多细节见仓库文档：<a href="https://github.com/MisakaMikoto128/rename-invoice/blob/main/apps/cli/README.md">apps/cli/README.md</a> ·
     <a href="https://github.com/MisakaMikoto128/rename-invoice/blob/main/apps/account-manager/README.md">apps/account-manager/README.md</a> ·
     <a href="https://github.com/MisakaMikoto128/rename-invoice/blob/main/apps/explorer-extension/README.md">apps/explorer-extension/README.md</a></p>
 </section>
@@ -329,8 +358,12 @@ pythonw rename_invoice.py --silent --summary --xlsx "D:\报销\7月"</code></pre
     <a href="https://github.com/MisakaMikoto128/rename-invoice/blob/main/CHANGELOG.md" target="_blank" rel="noopener">更新日志</a> ·
     MIT License
   </p>
-  <p class="disclaimer">免责声明: 本工具尽最大努力保证金额提取准确, 但不对因使用本工具产生的任何财务后果负责。报销前请自行核对金额。</p>
-免责声明：本工具尽最大努力保证金额提取准确，但不对因使用本工具产生的任何财务后果负责。报销前请自行核对金额。ement.style.scrollBehavior = 'smooth';
+  <p class="disclaimer">免责声明：本工具尽最大努力保证金额提取准确，但不对因使用本工具产生的任何财务后果负责。报销前请自行核对金额。</p>
+</footer>
+
+<script>
+// 平滑滚动 + 当前分区高亮
+document.documentElement.style.scrollBehavior = 'smooth';
 document.documentElement.style.scrollPaddingTop = '72px';
 const links = [...document.querySelectorAll('.topnav nav a[href^="#"]')];
 const map = new Map(links.map(a => [a.getAttribute('href').slice(1), a]));
