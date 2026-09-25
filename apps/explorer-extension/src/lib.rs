@@ -131,6 +131,10 @@ impl IExplorerCommand_Impl for InvoiceCommand_Impl {
     }
 
     fn GetState(&self, itemarray: Ref<'_, IShellItemArray>, _foktobeslow: BOOL) -> Result<u32> {
+        // CLI 配置缺失 (未安装/被卸载) 时隐藏菜单项, 避免"点了没反应"
+        if read_cli_config().is_none() {
+            return Ok(ECS_HIDDEN.0 as u32);
+        }
         let Ok(array) = itemarray.ok() else {
             return Ok(ECS_ENABLED.0 as u32);
         };

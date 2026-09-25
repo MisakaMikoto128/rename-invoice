@@ -684,7 +684,12 @@ def _show_summary_window(results, xlsx_path=None):
 # ---------------------------------------------------------------------------
 
 def silent_main(args, show_summary, want_xlsx):
-    """静默 + leader 路径: 写队列, 抢锁, 抢到的当 leader 处理全部."""
+    """静默 + leader 路径: 写队列, 抢锁, 抢到的当 leader 处理全部.
+
+    已知权衡: follower 在 leader 最后一次 drain 之后才写入队列的极端时序下,
+    其路径要等下次右键才会被处理 (文件无损). Explorer 并发启动间隔通常
+    <50ms, DEBOUNCE_SECONDS=0.25 + drain-until-empty 已覆盖实际场景.
+    """
     if not args:
         args = [os.getcwd()]
     _append_to_queue(args)
@@ -784,6 +789,7 @@ def direct_main(args, want_xlsx):
             print(c('[SKIP]', 'gray'),
                   f'{pdf.name}',
                   c(f'({msg})', 'gray'))
+            log_line(f'SKIP  {pdf.name}  ({msg})')
         else:
             print(c('[FAIL]', 'red'),
                   f'{pdf.name}',

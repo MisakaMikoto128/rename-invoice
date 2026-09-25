@@ -44,7 +44,7 @@ namespace InvoiceExtTest {
 
             uint state;
             cmd.GetState(IntPtr.Zero, 0, out state);
-            Console.WriteLine("GetState(null) = " + state + " (0=enabled, 4=hidden)");
+            Console.WriteLine("GetState(null) = " + state + " (0=enabled, 2=hidden)");
 
             Console.WriteLine(titleStr == "添加发票价格前缀" ? "PASS" : "TITLE-MISMATCH");
             return 0;
