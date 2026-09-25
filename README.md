@@ -10,7 +10,10 @@
 <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
 <img src="https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey.svg" alt="Platform: Windows">
 <a href="./CHANGELOG.md"><img src="https://img.shields.io/badge/version-1.1.0-green.svg" alt="Version 1.1.0"></a>
+<a href="https://misakamikoto128.github.io/rename-invoice/"><img src="https://img.shields.io/badge/%E5%AE%98%E7%BD%91-%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97-0f7b55" alt="官网使用指南"></a>
 </p>
+
+<p align="center"><a href="https://misakamikoto128.github.io/rename-invoice/"><strong>📖 图文使用指南（下载 / 安装 / 使用）</strong></a></p>
 
 把中国大陆增值税电子发票 PDF 重命名成 `{价税合计}元-{原文件名}.pdf`, 方便报销时一眼看到金额。
 
