@@ -1159,7 +1159,7 @@ Expected: 3 PASS, 1 SKIPPED (the optional PDF integration test)
 ```bash
 mkdir -p tests/_pdf_samples
 # Copy any one of your existing invoice PDFs
-cp "C:/Users/<用户名>/Desktop/WorkPlace/报销/test/某发票.pdf" tests/_pdf_samples/
+cp "<本地报销目录>/test/某发票.pdf" tests/_pdf_samples/
 pytest tests/test_extractor.py -v
 ```
 Expected: 4 PASS

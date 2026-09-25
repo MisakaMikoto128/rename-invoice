@@ -98,8 +98,8 @@ pip install -r requirements.txt
 
 ### 工具的安装位置
 
-仓库克隆到哪儿，工具就在哪儿（脚本位于仓库的 `apps/cli/` 下），例如本机当前是
-`C:\Users\<用户名>\tools\rename_invoice\apps\cli\`。
+仓库克隆到哪儿，工具就在哪儿（脚本位于仓库的 `apps/cli/` 下），例如
+`C:\Users\<你的用户名>\rename-invoice\apps\cli\`。
 
 > **不要随意挪动这个目录**——右键菜单的注册表指向绝对路径。如果一定要挪：
 >

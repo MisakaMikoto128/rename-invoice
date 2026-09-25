@@ -1209,7 +1209,7 @@ mkdir C:\temp\test_acc 2>nul
 python -c "from accounting import db; from accounting.services import project_service as ps; conn = db.connect(str(db.default_db_path())); p = ps.create_project(conn, name='M2 测试', folder_path='C:/temp/test_acc'); print(p.id)"
 ```
 
-Run app, open project. Click "+ 导入 PDF", pick one of the real invoice PDFs from `C:/Users/<用户名>/Desktop/WorkPlace/报销/test/`.
+Run app, open project. Click "+ 导入 PDF", pick one of the real invoice PDFs from `<本地报销目录>/test/`.
 Expected:
 - File copied into `C:/temp/test_acc/`
 - New row in invoice table with extracted fields
